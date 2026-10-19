@@ -1,6 +1,6 @@
 # Regressions for the 2026-10-19 second-model review (Sonnet, tier 2), round 3.
 cols <- function(p, a = "colour") unique(unlist(lapply(ggplot2::ggplot_build(p)$data, `[[`, a)))
-oi3 <- bgg_palette("okabe_ito", 3)
+oi3 <- bgg_palette("nejm", 3)
 
 test_that("F1a: a palette forwarded through another function's ... is kept", {
   h <- function(d, ...) ggbetweenstats(d, cyl, mpg, results.subtitle = FALSE, ...)
@@ -46,7 +46,7 @@ test_that("F5: a group keeps one colour across grouped panels", {
   expect_identical(a[shared], b[shared])
   expect_length(unique(c(a, b)), 3L)
   # same colours as an ungrouped plot: levels 4, 6, 8 get colours 1, 2, 3
-  expect_identical(unname(b[c("4", "6", "8")]), bgg_palette("okabe_ito", 3))
+  expect_identical(unname(b[c("4", "6", "8")]), bgg_palette("nejm", 3, "fill"))
 })
 
 test_that("panel level orders merge into the natural order", {

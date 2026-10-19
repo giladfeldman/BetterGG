@@ -2,6 +2,7 @@
 
 export(apa_p)
 export(apa_p_value)
+export(bgg_font)
 export(bgg_palette)
 export(ggbarstats)
 export(ggbetweenrain)

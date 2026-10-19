@@ -4,24 +4,23 @@
 \alias{theme_apa}
 \title{APA-style ggplot2 theme}
 \usage{
-theme_apa(base_size = 11, base_family = "")
+theme_apa(base_size = 12.5, base_family = bgg_font())
 }
 \arguments{
-\item{base_size}{Base font size in points (default 11).}
+\item{base_size}{Base font size in points (default 12.5).}
 
-\item{base_family}{Font family. \code{""} (default) is the device's sans-serif
-font (Arial on Windows, Helvetica on macOS). Any installed font name
-works with \code{\link[=save_figure]{save_figure()}}.}
+\item{base_family}{Font family; default \code{\link[=bgg_font]{bgg_font()}}.}
 }
 \value{
 A ggplot2 theme.
 }
 \description{
-White background, no grid lines, black axis lines and text, a sans-serif
-font, and plain (not bold) axis titles, following the APA 7 figure
-guidelines (sans-serif font, 8 to 14 pt, no background shading). It is
-the default \code{ggtheme} of every BetterGG plot; pass \verb{ggtheme =} yourself,
-or set \code{options(BetterGG.theme = FALSE)}, to keep 'ggstatsplot''s theme.
+White background, no grid lines, thin black axes, plain (not bold) axis
+titles, and the statistical results (subtitle and caption) centred over the
+plot panel. Uses Trebuchet MS at 12.5 pt when it is installed (Windows and
+macOS ship it), otherwise the device's sans-serif font. It is the default
+\code{ggtheme} of every BetterGG plot; pass \verb{ggtheme =} yourself, or set
+\code{options(BetterGG.theme = FALSE)}, to keep 'ggstatsplot''s theme.
 }
 \examples{
 ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() + theme_apa()

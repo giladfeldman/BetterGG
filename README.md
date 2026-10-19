@@ -54,13 +54,20 @@ Tune the parts with `cloud.args`, `box.args`, `rain.args`.
 
 Every BetterGG plot also gets, by default:
 
-- **`theme_apa()`**: white background, no grid lines, black axes, sans-serif
-  font, plain axis titles (APA 7 figure guidelines). Pass `ggtheme =` to use
-  your own, or `options(BetterGG.theme = FALSE)`.
-- **Colourblind-safe colours**: the Okabe-Ito palette. Pass `palette =` to use
-  your own, or `options(BetterGG.palette = "viridis")` (also survives
-  greyscale printing), `"grey"` (black-and-white print), or `NULL`
-  (ggstatsplot's colours).
+- **`theme_apa()`**: white background, no grid lines, thin black axes, plain
+  axis titles, the statistical results centred over the plot, Trebuchet MS
+  at 12.5 pt (falls back to the system sans-serif font if missing; change it
+  with `options(BetterGG.font = "Arial")`). Pass `ggtheme =` to use your own
+  theme, or `options(BetterGG.theme = FALSE)`.
+- **NEJM colours** (New England Journal of Medicine palette), a black mean
+  marker, softer points and thin outlines.
+- **Greyscale for print**: `options(BetterGG.palette = "grey")` gives dark
+  grey points and outlines over lighter grey fills, so groups stay distinct
+  in black-and-white. Other palettes: `"okabe_ito"`, `"viridis"`; `NULL`
+  keeps ggstatsplot's colours. Pass `palette =` to use your own.
+
+The defaults never change a number: with the same `set.seed()`, Bayesian and
+bootstrap results are identical to calling ggstatsplot directly.
 
 Save at journal size with embedded fonts:
 

@@ -8,7 +8,7 @@ test_that("Okabe-Ito colours match the published hex codes", {
 })
 
 test_that("palettes never return missing or repeated colours", {
-  for (nm in c("okabe_ito", "viridis", "grey")) {
+  for (nm in c("nejm", "okabe_ito", "viridis", "grey")) {
     cols <- bgg_palette(nm, 5)
     expect_false(anyNA(cols), label = nm)
     expect_identical(length(unique(cols)), 5L, label = nm)
@@ -21,23 +21,23 @@ built_colours <- function(p, aes) {
   unique(unlist(lapply(b$data, function(d) d[[aes]])))
 }
 
-test_that("BetterGG plots carry the Okabe-Ito colours (no blanks)", {
+test_that("BetterGG plots carry the NEJM colours by default (no blanks)", {
   set.seed(1)
   bar <- suppressWarnings(ggbarstats(mtcars, am, cyl))
   fills <- built_colours(bar, "fill")
-  expect_true(all(bgg_palette("okabe_ito", 2) %in% toupper(fills) | bgg_palette("okabe_ito", 2) %in% fills))
+  expect_true(all(toupper(bgg_palette("nejm", 2)) %in% toupper(fills)))
   expect_false(anyNA(Filter(function(x) !identical(x, "white"), fills)))
 
   set.seed(1)
   bw <- suppressWarnings(ggbetweenstats(mtcars, cyl, mpg))
   cols <- built_colours(bw, "colour")
-  expect_true(all(bgg_palette("okabe_ito", 3) %in% cols))
+  expect_true(all(bgg_palette("nejm", 3) %in% cols))
 })
 
 test_that("user palette and ggtheme are respected", {
   set.seed(1)
   p <- suppressWarnings(ggbarstats(mtcars, am, cyl, palette = "ggthemes::gdoc"))
-  expect_false(any(bgg_palette("okabe_ito", 2) %in% built_colours(p, "fill")))
+  expect_false(any(bgg_palette("nejm", 2) %in% built_colours(p, "fill")))
   p2 <- suppressWarnings(ggbetweenstats(mtcars, cyl, mpg, ggtheme = ggplot2::theme_dark(), results.subtitle = FALSE))
   expect_s3_class(ggplot2::calc_element("panel.background", p2$theme), "element_rect")
   expect_false(identical(ggplot2::calc_element("panel.background", p2$theme)$fill, "white"))
@@ -86,4 +86,72 @@ test_that("save_figure writes vector PDF with embedded fonts and sized rasters",
   w <- sum(as.integer(sig[17:20]) * 256^(3:0))
   expect_equal(w, round(7.2 * 300))
   expect_error(save_figure(p, "x.bmp"), "unsupported")
+})
+
+test_that("NEJM palette matches the ggsci NEJM hex codes", {
+  expect_identical(
+    toupper(bgg_palette("nejm", 4)),
+    c("#BC3C29", "#0072B5", "#E18727", "#20854E")
+  )
+})
+
+test_that("results (subtitle, caption) are centred; font and size as approved", {
+  th <- theme_apa()
+  expect_equal(ggplot2::calc_element("plot.subtitle", th)$hjust, 0.5)
+  expect_equal(ggplot2::calc_element("plot.caption", th)$hjust, 0.5)
+  expect_equal(ggplot2::calc_element("text", th)$size, 12.5)
+  if ("Trebuchet MS" %in% systemfonts::system_fonts()$family) {
+    expect_identical(bgg_font(), "Trebuchet MS")
+    expect_identical(ggplot2::calc_element("text", th)$family, "Trebuchet MS")
+  }
+  old <- options(BetterGG.font = "No Such Font 123")
+  on.exit(options(old))
+  expect_identical(bgg_font(), "") # falls back, never a missing font
+})
+
+test_that("in-panel labels use the BetterGG font", {
+  skip_if_not("Trebuchet MS" %in% systemfonts::system_fonts()$family)
+  set.seed(1)
+  p <- suppressWarnings(ggbetweenstats(mtcars, cyl, mpg))
+  lab <- Filter(function(l) inherits(l$geom, "GeomLabelRepel"), p$layers)[[1]]
+  expect_identical(lab$aes_params$family, "Trebuchet MS")
+})
+
+test_that("greyscale option: only greys, darker outlines than fills, violins filled", {
+  old <- options(BetterGG.palette = "grey")
+  on.exit(options(old))
+  is_grey <- function(h) { v <- grDevices::col2rgb(h); v[1, ] == v[2, ] & v[2, ] == v[3, ] }
+  set.seed(1)
+  p <- suppressWarnings(ggbetweenstats(mtcars, cyl, mpg))
+  b <- ggplot2::ggplot_build(p)
+  vi <- which(vapply(p$layers, function(l) inherits(l$geom, "GeomViolin"), TRUE))
+  fills <- unique(b$data[[vi]]$fill)
+  cols <- unique(b$data[[1]]$colour)
+  expect_length(fills, 3L)
+  expect_true(all(is_grey(fills)) && all(is_grey(cols)))
+  lum <- function(h) colSums(grDevices::col2rgb(h))
+  expect_true(all(lum(bgg_palette("grey", 3, "colour")) < lum(bgg_palette("grey", 3, "fill"))))
+  bar <- suppressWarnings(ggbarstats(mtcars, am, cyl))
+  expect_true(all(is_grey(Filter(Negate(is.na), built_colours(bar, "fill")))))
+})
+
+test_that("user drawing arguments win over the BetterGG look", {
+  set.seed(1)
+  p <- suppressWarnings(ggbetweenstats(mtcars, cyl, mpg, results.subtitle = FALSE,
+    centrality.point.args = list(size = 6, colour = "darkred")))
+  cp <- Filter(function(l) inherits(l$geom, "GeomPoint") && is.data.frame(l$data), p$layers)[[1]]
+  expect_identical(cp$aes_params$colour, "darkred")
+})
+
+test_that("BetterGG leaves the random-number stream untouched (same seed, same Bayes results)", {
+  set.seed(7)
+  a <- suppressWarnings(ggbetweenstats(mtcars, cyl, mpg))
+  set.seed(7)
+  b <- suppressWarnings(ggstatsplot::ggbetweenstats(mtcars, cyl, mpg))
+  expect_identical(ggstatsplot::extract_stats(a)$caption_data, ggstatsplot::extract_stats(b)$caption_data)
+  set.seed(7)
+  BetterGG:::.rng_neutral(BetterGG:::.style_args("ggbetweenstats"))
+  x <- runif(1)
+  set.seed(7)
+  expect_identical(runif(1), x)
 })

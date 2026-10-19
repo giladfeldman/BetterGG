@@ -1,32 +1,32 @@
 #' APA-style ggplot2 theme
 #'
-#' White background, no grid lines, black axis lines and text, a sans-serif
-#' font, and plain (not bold) axis titles, following the APA 7 figure
-#' guidelines (sans-serif font, 8 to 14 pt, no background shading). It is
-#' the default `ggtheme` of every BetterGG plot; pass `ggtheme =` yourself,
-#' or set `options(BetterGG.theme = FALSE)`, to keep 'ggstatsplot''s theme.
+#' White background, no grid lines, thin black axes, plain (not bold) axis
+#' titles, and the statistical results (subtitle and caption) centred over the
+#' plot panel. Uses Trebuchet MS at 12.5 pt when it is installed (Windows and
+#' macOS ship it), otherwise the device's sans-serif font. It is the default
+#' `ggtheme` of every BetterGG plot; pass `ggtheme =` yourself, or set
+#' `options(BetterGG.theme = FALSE)`, to keep 'ggstatsplot''s theme.
 #'
-#' @param base_size Base font size in points (default 11).
-#' @param base_family Font family. `""` (default) is the device's sans-serif
-#'   font (Arial on Windows, Helvetica on macOS). Any installed font name
-#'   works with [save_figure()].
+#' @param base_size Base font size in points (default 12.5).
+#' @param base_family Font family; default [bgg_font()].
 #' @return A ggplot2 theme.
 #' @examples
 #' ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() + theme_apa()
 #' @export
-theme_apa <- function(base_size = 11, base_family = "") {
+theme_apa <- function(base_size = 12.5, base_family = bgg_font()) {
   ggplot2::theme_classic(base_size = base_size, base_family = base_family) +
     ggplot2::theme(
       text = ggplot2::element_text(colour = "black"),
-      axis.text = ggplot2::element_text(colour = "black", size = ggplot2::rel(0.9)),
-      axis.title = ggplot2::element_text(face = "plain"),
-      axis.title.y.right = ggplot2::element_text(size = ggplot2::rel(0.75), colour = "grey30"),
-      axis.line = ggplot2::element_line(colour = "black", linewidth = 0.4),
-      axis.ticks = ggplot2::element_line(colour = "black", linewidth = 0.4),
-      plot.title = ggplot2::element_text(face = "bold", size = ggplot2::rel(1.1), hjust = 0),
-      plot.subtitle = ggplot2::element_text(size = ggplot2::rel(0.85), hjust = 0),
-      plot.caption = ggplot2::element_text(size = ggplot2::rel(0.75), colour = "grey30"),
-      plot.title.position = "plot",
+      axis.text = ggplot2::element_text(colour = "black", size = ggplot2::rel(0.88)),
+      axis.title = ggplot2::element_text(face = "plain", size = ggplot2::rel(0.95)),
+      axis.title.y.right = ggplot2::element_text(size = ggplot2::rel(0.72), colour = "grey35"),
+      axis.line = ggplot2::element_line(colour = "black", linewidth = 0.35),
+      axis.ticks = ggplot2::element_line(colour = "black", linewidth = 0.35),
+      plot.title = ggplot2::element_text(face = "bold", size = ggplot2::rel(1.15), hjust = 0),
+      plot.subtitle = ggplot2::element_text(size = ggplot2::rel(0.92), colour = "black", hjust = 0.5),
+      plot.caption = ggplot2::element_text(size = ggplot2::rel(0.8), colour = "black", hjust = 0.5),
+      plot.title.position = "panel",
+      plot.caption.position = "panel",
       legend.title = ggplot2::element_text(face = "plain"),
       legend.key = ggplot2::element_blank(),
       strip.background = ggplot2::element_blank(),
@@ -34,27 +34,55 @@ theme_apa <- function(base_size = 11, base_family = "") {
     )
 }
 
-#' Colourblind-safe and print-safe palettes
+#' The BetterGG font
 #'
-#' * `"okabe_ito"` (default): the Okabe-Ito palette, distinguishable with all
-#'   common forms of colour-vision deficiency. Taken from base R's
-#'   `palette.colors("Okabe-Ito")` without its black and grey; 7 colours.
-#' * `"viridis"`: perceptually uniform, colourblind-safe, and ordered from dark
-#'   to light, so it also survives greyscale printing; any number of colours.
-#' * `"grey"`: greys for black-and-white print; any number of colours.
+#' `"Trebuchet MS"` if it is installed, otherwise `""` (the device's
+#' sans-serif font). Change it with `options(BetterGG.font = "Arial")`.
+#'
+#' Calibri is not recommended: with 'ggstatsplot''s formula-style subtitles it
+#' makes PNG/TIFF rendering fail ("Viewport has zero dimension(s)").
+#'
+#' @return A font family name.
+#' @export
+bgg_font <- function() {
+  want <- getOption("BetterGG.font", "Trebuchet MS")
+  if (identical(want, "")) return("")
+  if (want %in% systemfonts::system_fonts()$family) want else ""
+}
+
+#' BetterGG palettes
+#'
+#' * `"nejm"` (default): the New England Journal of Medicine palette (from
+#'   the 'ggsci' collection via 'paletteer'); 8 colours.
+#' * `"grey"`: greyscale for black-and-white print. Outlines and points use
+#'   darker greys (`type = "colour"`) than the fills (`type = "fill"`), so
+#'   points stay visible on filled violins and bars; 6 levels.
+#' * `"okabe_ito"`: the Okabe-Ito colourblind-safe palette; 7 colours.
+#' * `"viridis"`: perceptually uniform and colourblind-safe; any number.
 #'
 #' Asking for more colours than a palette has is an error, never a silent
 #' repeat (a repeated colour would make two groups look the same).
 #'
 #' @param name Palette name.
 #' @param n Number of colours.
+#' @param type `"colour"` (points, lines, outlines) or `"fill"` (areas). Only
+#'   `"grey"` differs between the two.
 #' @return A character vector of hex colours.
 #' @examples
-#' bgg_palette("okabe_ito", 3)
+#' bgg_palette("nejm", 3)
+#' bgg_palette("grey", 3, type = "fill")
 #' @export
-bgg_palette <- function(name = c("okabe_ito", "viridis", "grey"), n) {
+bgg_palette <- function(name = c("nejm", "grey", "okabe_ito", "viridis"), n,
+                        type = c("colour", "fill")) {
   name <- match.arg(name)
+  type <- match.arg(type)
   cols <- switch(name,
+    nejm = substr(as.character(paletteer::paletteer_d("ggsci::default_nejm")), 1, 7),
+    grey = if (type == "colour") {
+      c("#000000", "#555555", "#8C8C8C", "#2B2B2B", "#707070", "#A8A8A8")
+    } else {
+      c("#5E5E5E", "#A6A6A6", "#DCDCDC", "#7F7F7F", "#C2C2C2", "#EFEFEF")
+    },
     okabe_ito = {
       # base R order: black, orange, sky blue, bluish green, yellow, blue,
       # vermillion, reddish purple, grey. Drop black and grey; yellow last
@@ -62,13 +90,12 @@ bgg_palette <- function(name = c("okabe_ito", "viridis", "grey"), n) {
       oi <- unname(grDevices::palette.colors(palette = "Okabe-Ito"))
       oi[c(2, 3, 4, 6, 7, 8, 5)]
     },
-    viridis = viridisLite::viridis(n, end = 0.9),
-    grey = grDevices::grey.colors(n, start = 0.15, end = 0.7)
+    viridis = viridisLite::viridis(n, end = 0.9)
   )
   if (anyNA(cols)) stop("BetterGG: palette '", name, "' returned missing colours.", call. = FALSE)
   if (n > length(cols)) {
     stop("BetterGG: palette '", name, "' has ", length(cols), " colours but ", n,
-      " are needed; use \"viridis\" or \"grey\".", call. = FALSE)
+      " are needed; use \"viridis\".", call. = FALSE)
   }
   cols[seq_len(n)]
 }
@@ -77,13 +104,12 @@ bgg_palette <- function(name = c("okabe_ito", "viridis", "grey"), n) {
 #'
 #' @param palette Palette name, see [bgg_palette()].
 #' @param ... Passed to [ggplot2::discrete_scale()].
-#' @return A ggplot2 scale applied to both `colour` and `fill`.
+#' @return A list of two ggplot2 scales (colour and fill).
 #' @export
-scale_colour_bgg <- function(palette = "okabe_ito", ...) {
-  ggplot2::discrete_scale(
-    aesthetics = c("colour", "fill"),
-    palette = function(n) bgg_palette(palette, n),
-    ...
+scale_colour_bgg <- function(palette = "nejm", ...) {
+  list(
+    ggplot2::discrete_scale("colour", palette = function(n) bgg_palette(palette, n, "colour"), ...),
+    ggplot2::discrete_scale("fill", palette = function(n) bgg_palette(palette, n, "fill"), ...)
   )
 }
 
@@ -99,7 +125,7 @@ scale_colour_bgg <- function(palette = "okabe_ito", ...) {
   if (length(panels) > 1L) {
     for (aes in c("colour", "fill")) {
       lv <- .merge_orders(lapply(panels, .scale_limits, aes = aes))
-      if (length(lv)) named[[aes]] <- stats::setNames(bgg_palette(palette, length(lv)), lv)
+      if (length(lv)) named[[aes]] <- stats::setNames(bgg_palette(palette, length(lv), aes), lv)
     }
   }
   recolour <- function(p) {
@@ -109,7 +135,7 @@ scale_colour_bgg <- function(palette = "okabe_ito", ...) {
       if (is.null(sc) || !sc$is_discrete() || !.from_ggstatsplot(sc)) next
       new <- sc$clone()
       pal <- named[[aes]]
-      new$palette <- if (is.null(pal)) function(n) bgg_palette(palette, n) else function(n) pal
+      new$palette <- if (is.null(pal)) function(n) bgg_palette(palette, n, aes) else function(n) pal
       p <- suppressMessages(p + new)
     }
     p

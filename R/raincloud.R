@@ -193,12 +193,7 @@ NULL
   plot
 }
 
-# ggstatsplot sets the colour palette only; give the fills the same palette so
-# cloud, rain and the original points share one set of group colours.
-.fill_like_colour <- function(plot) {
-  sc <- plot$scales$get_scales("colour")
-  if (is.null(sc)) return(plot)
-  both <- sc$clone()
-  both$aesthetics <- c("colour", "fill")
-  suppressMessages(plot + both)
-}
+# ggstatsplot sets the colour palette only; give the fills their own scale
+# with the same settings, so cloud and rain share the group colours (and the
+# greyscale option can use lighter fills than outlines).
+.fill_like_colour <- function(plot) .add_fill_scale(plot)

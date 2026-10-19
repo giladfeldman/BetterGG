@@ -2,26 +2,34 @@
 % Please edit documentation in R/theme.R
 \name{bgg_palette}
 \alias{bgg_palette}
-\title{Colourblind-safe and print-safe palettes}
+\title{BetterGG palettes}
 \usage{
-bgg_palette(name = c("okabe_ito", "viridis", "grey"), n)
+bgg_palette(
+  name = c("nejm", "grey", "okabe_ito", "viridis"),
+  n,
+  type = c("colour", "fill")
+)
 }
 \arguments{
 \item{name}{Palette name.}
 
 \item{n}{Number of colours.}
+
+\item{type}{\code{"colour"} (points, lines, outlines) or \code{"fill"} (areas). Only
+\code{"grey"} differs between the two.}
 }
 \value{
 A character vector of hex colours.
 }
 \description{
 \itemize{
-\item \code{"okabe_ito"} (default): the Okabe-Ito palette, distinguishable with all
-common forms of colour-vision deficiency. Taken from base R's
-\code{palette.colors("Okabe-Ito")} without its black and grey; 7 colours.
-\item \code{"viridis"}: perceptually uniform, colourblind-safe, and ordered from dark
-to light, so it also survives greyscale printing; any number of colours.
-\item \code{"grey"}: greys for black-and-white print; any number of colours.
+\item \code{"nejm"} (default): the New England Journal of Medicine palette (from
+the 'ggsci' collection via 'paletteer'); 8 colours.
+\item \code{"grey"}: greyscale for black-and-white print. Outlines and points use
+darker greys (\code{type = "colour"}) than the fills (\code{type = "fill"}), so
+points stay visible on filled violins and bars; 6 levels.
+\item \code{"okabe_ito"}: the Okabe-Ito colourblind-safe palette; 7 colours.
+\item \code{"viridis"}: perceptually uniform and colourblind-safe; any number.
 }
 }
 \details{
@@ -29,5 +37,6 @@ Asking for more colours than a palette has is an error, never a silent
 repeat (a repeated colour would make two groups look the same).
 }
 \examples{
-bgg_palette("okabe_ito", 3)
+bgg_palette("nejm", 3)
+bgg_palette("grey", 3, type = "fill")
 }

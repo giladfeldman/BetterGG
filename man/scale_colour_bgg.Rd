@@ -4,7 +4,7 @@
 \alias{scale_colour_bgg}
 \title{Discrete colour and fill scales with a BetterGG palette}
 \usage{
-scale_colour_bgg(palette = "okabe_ito", ...)
+scale_colour_bgg(palette = "nejm", ...)
 }
 \arguments{
 \item{palette}{Palette name, see \code{\link[=bgg_palette]{bgg_palette()}}.}
@@ -12,7 +12,7 @@ scale_colour_bgg(palette = "okabe_ito", ...)
 \item{...}{Passed to \code{\link[ggplot2:discrete_scale]{ggplot2::discrete_scale()}}.}
 }
 \value{
-A ggplot2 scale applied to both \code{colour} and \code{fill}.
+A list of two ggplot2 scales (colour and fill).
 }
 \description{
 Discrete colour and fill scales with a BetterGG palette

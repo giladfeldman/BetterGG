@@ -20,17 +20,55 @@
   call[[1]] <- call("::", as.name("ggstatsplot"), as.name(name))
   for (d in intersect(drop, names(call))) call[[d]] <- NULL
   given <- names(match.call(fn, call, expand.dots = TRUE, envir = env))
-  if (isTRUE(getOption("BetterGG.theme", TRUE)) && !"ggtheme" %in% given) {
+  styled <- isTRUE(getOption("BetterGG.theme", TRUE)) && !"ggtheme" %in% given
+  if (styled) {
     call$ggtheme <- theme_apa()
+    style <- .rng_neutral(.style_args(sub("^grouped_", "", name)))
+    for (nm in setdiff(names(style), given)) call[[nm]] <- style[[nm]]
   }
-  list(plot = eval(call, env), given = given)
+  list(plot = eval(call, env), given = c(given, if (styled) ".bgg_styled"))
 }
 
-# Palette (unless the user chose one) and APA p-values.
+# Evaluate `expr` without changing the random-number state, so a user's
+# set.seed() gives exactly the same Bayesian/bootstrap results as calling
+# 'ggstatsplot' directly (position_jitterdodge() draws a seed when created).
+.rng_neutral <- function(expr) {
+  had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+  if (had) old <- get(".Random.seed", envir = globalenv())
+  on.exit(if (had) assign(".Random.seed", old, envir = globalenv())
+    else if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) rm(".Random.seed", envir = globalenv()))
+  expr
+}
+
+# Drawing defaults of the BetterGG look (black mean marker, softer points,
+# thin outlines). Each is used only when the user did not set that argument.
+.style_args <- function(base) {
+  grey <- identical(getOption("BetterGG.palette", "nejm"), "grey")
+  centre <- list(centrality.point.args = list(size = 4, colour = "black"))
+  switch(base,
+    ggbetweenstats = c(centre, list(
+      point.args = list(
+        position = ggplot2::position_jitterdodge(dodge.width = 0.6),
+        alpha = 0.6, size = 2.2, stroke = 0, na.rm = TRUE
+      ),
+      violin.args = list(width = 0.55, alpha = 0.2, linewidth = 0.3,
+        colour = if (grey) "black" else "grey40", na.rm = TRUE),
+      boxplot.args = list(width = 0.22, alpha = 0, linewidth = 0.35, na.rm = TRUE)
+    )),
+    ggwithinstats = centre,
+    list()
+  )
+}
+
+# Palette (unless the user chose one), font of in-panel text, APA p-values.
 .finish <- function(plot, given) {
+  palette <- getOption("BetterGG.palette", "nejm")
   if (!any(c("palette", "package") %in% given)) {
-    plot <- .apply_palette(plot, getOption("BetterGG.palette", "okabe_ito"))
+    # greyscale: fill the violins in grey so groups differ by shade
+    if (identical(palette, "grey")) plot <- .tint_violins(plot, alpha = 0.6)
+    plot <- .apply_palette(plot, palette)
   }
+  if (".bgg_styled" %in% given && !identical(bgg_font(), "")) plot <- .set_family(plot, bgg_font())
   if (isTRUE(getOption("BetterGG.apa", TRUE))) plot <- apa_p(plot)
   plot
 }
@@ -107,3 +145,35 @@ ggcorrmat <- .wrap("ggcorrmat")
 #' @rdname ggstatsplot-apa
 #' @export
 grouped_ggcorrmat <- .wrap("grouped_ggcorrmat")
+
+# Fill ggstatsplot's (empty) violins in the group colour, and give the plot a
+# fill scale cloned from its colour scale so the palette swap can recolour it.
+.tint_violins <- function(plot, alpha) {
+  one <- function(p) {
+    if (!inherits(p, "ggplot") || !any(vapply(p$layers, function(l) inherits(l$geom, "GeomViolin"), TRUE))) {
+      return(p)
+    }
+    x <- p$mapping$x
+    p$layers <- lapply(p$layers, function(l) {
+      if (!inherits(l$geom, "GeomViolin")) return(l)
+      n <- ggplot2::ggproto(NULL, l)
+      keep <- as.list(l$mapping)
+      keep$fill <- x
+      n$mapping <- ggplot2::aes(!!!keep)
+      n$aes_params$alpha <- alpha
+      n
+    })
+    .add_fill_scale(p)
+  }
+  if (inherits(plot, "patchwork")) plot$patches$plots <- lapply(plot$patches$plots, one)
+  one(plot)
+}
+
+# A separate fill scale with the colour scale's settings (only if missing).
+.add_fill_scale <- function(p) {
+  sc <- p$scales$get_scales("colour")
+  if (is.null(sc) || !is.null(p$scales$get_scales("fill"))) return(p)
+  f <- sc$clone()
+  f$aesthetics <- "fill"
+  suppressMessages(p + f)
+}

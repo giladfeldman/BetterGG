@@ -14,10 +14,11 @@
 #'   [ggstatsplot::ggwithinstats()].
 #' @param cloud.args,box.args,rain.args Lists of arguments for the cloud
 #'   ([ggdist::stat_slab()]), the box ([ggplot2::geom_boxplot()]) and the rain
-#'   ([ggdist::stat_dots()] for between-subjects, [ggplot2::geom_point()] for
+#'   ([ggdist::stat_dots()] for between-subjects, in a beeswarm layout that
+#'   keeps every dot at its exact value; [ggplot2::geom_point()] for
 #'   within-subjects, where the points stay linked by their subject lines).
 #' @param orientation `"vertical"` (default, like 'ggstatsplot') or
-#'   `"horizontal"` (clouds float to the right of the rain).
+#'   `"horizontal"` (groups on the y axis, clouds above the rain).
 #' @return A `ggplot` object.
 #' @examples
 #' ggbetweenrain(mtcars, cyl, mpg)
@@ -71,7 +72,7 @@ grouped_ggwithinrain <- function(data, ..., grouping.var, plotgrid.args = list()
 .default_rain_args <- list(
   cloud = list(adjust = 1, width = 0.5, justification = -0.25, alpha = 0.5, normalize = "groups"),
   box = list(width = 0.12, alpha = 0.6, outlier.shape = NA, na.rm = TRUE),
-  rain_between = list(side = "left", justification = 1.2, scale = 0.45, alpha = 0.7),
+  rain_between = list(side = "left", justification = 1.2, scale = 0.45, alpha = 0.7, layout = "swarm"),
   rain_within = list(size = 2, alpha = 0.5, na.rm = TRUE)
 )
 
@@ -129,9 +130,10 @@ NULL
     if (mirror) {
       first <- function(d) d[as.character(d[[xname]]) == lv[1], , drop = FALSE]
       rest <- function(d) d[as.character(d[[xname]]) != lv[1], , drop = FALSE]
+      # the mirror's side and offset win over user cloud.args
       left_args <- utils::modifyList(
-        utils::modifyList(.default_rain_args$cloud, list(side = "left", justification = 1.25)),
-        cloud.args
+        utils::modifyList(.default_rain_args$cloud, cloud.args),
+        list(side = "left", justification = 1.25)
       )
       cloud <- list(
         do.call(ggdist::stat_slab, c(list(mapping = ggplot2::aes(fill = !!x, group = !!x),

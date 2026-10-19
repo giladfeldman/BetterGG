@@ -101,3 +101,41 @@ test_that("an unexpected plot structure stops instead of drawing something wrong
   p <- ggplot2::ggplot(mtcars, ggplot2::aes(factor(cyl), mpg)) + ggplot2::geom_point()
   expect_error(BetterGG:::.to_raincloud(p, FALSE, list(), list(), list(), "vertical"), "unexpected")
 })
+
+test_that("between-subjects rain dots sit at the exact data values (no binning)", {
+  set.seed(42)
+  p <- suppressWarnings(ggbetweenrain(mtcars, cyl, mpg))
+  dots <- Filter(function(l) grepl("Dots", class(l$geom)[1]), p$layers)[[1]]
+  layout <- dots$geom_params$layout %||% dots$stat_params$layout %||% "bin"
+  for (cy in unique(mtcars$cyl)) {
+    y <- mtcars$mpg[mtcars$cyl == cy]
+    d <- ggdist::bin_dots(x = 0, y = y, binwidth = 0.8, layout = layout, side = "left", orientation = "vertical")
+    expect_equal(sort(d$y), sort(y), tolerance = 0, label = paste("cyl", cy, "layout", layout))
+  }
+})
+
+test_that("every observation appears once in the rain", {
+  set.seed(42)
+  b <- ggplot2::ggplot_build(suppressWarnings(ggbetweenrain(mtcars, cyl, mpg)))
+  dots <- b$data[[2]]
+  expect_equal(nrow(dots), nrow(mtcars))
+  expect_equal(sort(dots$y), sort(mtcars$mpg))
+
+  d2 <- dplyr::filter(ggstatsplot::bugs_long, condition %in% c("HDHF", "LDLF"))
+  set.seed(42)
+  w <- suppressWarnings(ggwithinrain(d2, condition, desire, subject.id = subject))
+  pts <- ggplot2::ggplot_build(w)$data[[which(vapply(w$layers, function(l) class(l$geom)[1], "") == "GeomPoint")[1]]]
+  expect_equal(nrow(pts), nrow(w$data))
+  expect_equal(sort(pts$y), sort(w$data$desire))
+})
+
+test_that("mirror keeps its sides even when the user passes cloud.args", {
+  d2 <- dplyr::filter(ggstatsplot::bugs_long, condition %in% c("HDHF", "LDLF"))
+  set.seed(42)
+  w <- suppressWarnings(ggwithinrain(d2, condition, desire, subject.id = subject,
+    cloud.args = list(side = "right", justification = 0, alpha = 0.2)))
+  slabs <- Filter(function(l) grepl("Slab", class(l$geom)[1]), w$layers)
+  side <- function(l) l$geom_params$side %||% l$stat_params$side %||% l$aes_params$side
+  expect_identical(side(slabs[[1]]), "left")
+  expect_equal(slabs[[1]]$aes_params$alpha, 0.2)
+})

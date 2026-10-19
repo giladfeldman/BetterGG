@@ -45,11 +45,12 @@ grouped_ggwithinrain(
 
 \item{cloud.args, box.args, rain.args}{Lists of arguments for the cloud
 (\code{\link[ggdist:stat_slab]{ggdist::stat_slab()}}), the box (\code{\link[ggplot2:geom_boxplot]{ggplot2::geom_boxplot()}}) and the rain
-(\code{\link[ggdist:stat_dots]{ggdist::stat_dots()}} for between-subjects, \code{\link[ggplot2:geom_point]{ggplot2::geom_point()}} for
+(\code{\link[ggdist:stat_dots]{ggdist::stat_dots()}} for between-subjects, in a beeswarm layout that
+keeps every dot at its exact value; \code{\link[ggplot2:geom_point]{ggplot2::geom_point()}} for
 within-subjects, where the points stay linked by their subject lines).}
 
 \item{orientation}{\code{"vertical"} (default, like 'ggstatsplot') or
-\code{"horizontal"} (clouds float to the right of the rain).}
+\code{"horizontal"} (groups on the y axis, clouds above the rain).}
 
 \item{grouping.var, plotgrid.args, annotation.args}{As in
 \code{\link[ggstatsplot:grouped_ggbetweenstats]{ggstatsplot::grouped_ggbetweenstats()}}.}

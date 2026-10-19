@@ -34,7 +34,23 @@ apa_p(some_existing_plot)          # convert a plot you already made
 options(BetterGG.apa = FALSE)      # back to the original ggstatsplot output
 ```
 
-## Install (from this folder)
+## Raincloud plots
+
+```r
+ggbetweenrain(mtcars, cyl, mpg)                       # same arguments as ggbetweenstats()
+ggwithinrain(bugs_long, condition, desire, subject.id = subject)   # as ggwithinstats()
+grouped_ggbetweenrain(mtcars, cyl, mpg, grouping.var = am)
+ggbetweenrain(mtcars, cyl, mpg, orientation = "horizontal")
+```
+
+ggstatsplot builds the plot (subtitle, Bayesian caption, pairwise brackets,
+means); BetterGG only replaces the violin, box and points with a half-density
+cloud, a narrow box and the raw data as rain. Every number on the plot is the
+one ggstatsplot reports for the same call. With two within-subject conditions
+the first is mirrored so each subject's line joins the two inner rains.
+Tune the parts with `cloud.args`, `box.args`, `rain.args`.
+
+## Install (from this folder; needs R >= 4.5, like ggstatsplot 1.1.3)
 
 ```r
 install.packages(".", repos = NULL, type = "source")
@@ -43,5 +59,5 @@ install.packages(".", repos = NULL, type = "source")
 ## Planned
 
 1. APA p-values (done)
-2. Raincloud plots with the ggstatsplot look and statistics subtitle
+2. Raincloud plots (done)
 3. Publication-ready colour palettes and fonts

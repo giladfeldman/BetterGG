@@ -1,0 +1,4 @@
+^plan\.md$
+^tmp$
+^README\.md$
+^\.git.*$

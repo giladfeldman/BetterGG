@@ -4,3 +4,5 @@
 tmp/
 *.Rcheck/
 BetterGG_*.tar.gz
+
+communications/

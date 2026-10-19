@@ -6,24 +6,29 @@
 .wrap <- function(name) {
   force(name)
   function(...) {
-    call <- sys.call()
-    plot <- .call_ggstatsplot(name, call, parent.frame())
-    .finish(plot, call)
+    res <- .call_ggstatsplot(name, sys.call(), parent.frame())
+    .finish(res$plot, res$given)
   }
 }
 
+# Rebuild the call for ggstatsplot and evaluate it in the user's frame.
+# `given` is the set of argument names the user supplied, resolved the way R
+# resolves them (partial names, arguments forwarded through `...`), so a
+# palette or theme the user chose is always recognised.
 .call_ggstatsplot <- function(name, call, env, drop = character()) {
+  fn <- getExportedValue("ggstatsplot", name)
   call[[1]] <- call("::", as.name("ggstatsplot"), as.name(name))
   for (d in intersect(drop, names(call))) call[[d]] <- NULL
-  if (isTRUE(getOption("BetterGG.theme", TRUE)) && !"ggtheme" %in% names(call)) {
+  given <- names(match.call(fn, call, expand.dots = TRUE, envir = env))
+  if (isTRUE(getOption("BetterGG.theme", TRUE)) && !"ggtheme" %in% given) {
     call$ggtheme <- theme_apa()
   }
-  eval(call, env)
+  list(plot = eval(call, env), given = given)
 }
 
 # Palette (unless the user chose one) and APA p-values.
-.finish <- function(plot, call) {
-  if (!any(c("palette", "package") %in% names(call))) {
+.finish <- function(plot, given) {
+  if (!any(c("palette", "package") %in% given)) {
     plot <- .apply_palette(plot, getOption("BetterGG.palette", "okabe_ito"))
   }
   if (isTRUE(getOption("BetterGG.apa", TRUE))) plot <- apa_p(plot)

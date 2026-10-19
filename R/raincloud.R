@@ -26,20 +26,20 @@
 #' @export
 ggbetweenrain <- function(..., cloud.args = list(), box.args = list(),
                           rain.args = list(), orientation = c("vertical", "horizontal")) {
-  call <- sys.call()
-  plot <- .call_ggstatsplot("ggbetweenstats", call, parent.frame(), drop = .rain_own_args)
-  plot <- .to_raincloud(plot, paired = FALSE, cloud.args, box.args, rain.args, match.arg(orientation))
-  .finish(plot, call)
+  .check_own_args(names(rlang::enquos(...)), .rain_own_args)
+  res <- .call_ggstatsplot("ggbetweenstats", sys.call(), parent.frame(), drop = .rain_own_args)
+  plot <- .to_raincloud(res$plot, paired = FALSE, cloud.args, box.args, rain.args, match.arg(orientation))
+  .finish(plot, res$given)
 }
 
 #' @rdname ggbetweenrain
 #' @export
 ggwithinrain <- function(..., cloud.args = list(), box.args = list(),
                          rain.args = list(), orientation = c("vertical", "horizontal")) {
-  call <- sys.call()
-  plot <- .call_ggstatsplot("ggwithinstats", call, parent.frame(), drop = .rain_own_args)
-  plot <- .to_raincloud(plot, paired = TRUE, cloud.args, box.args, rain.args, match.arg(orientation))
-  .finish(plot, call)
+  .check_own_args(names(rlang::enquos(...)), .rain_own_args)
+  res <- .call_ggstatsplot("ggwithinstats", sys.call(), parent.frame(), drop = .rain_own_args)
+  plot <- .to_raincloud(res$plot, paired = TRUE, cloud.args, box.args, rain.args, match.arg(orientation))
+  .finish(plot, res$given)
 }
 
 #' @rdname ggbetweenrain
@@ -76,15 +76,18 @@ grouped_ggwithinrain <- function(data, ..., grouping.var, plotgrid.args = list()
   levels <- unique(dplyr::pull(data, !!gv))
   levels <- if (is.factor(levels)) levels(droplevels(levels)) else sort(levels)
   drop <- c("grouping.var", "plotgrid.args", "annotation.args", .rain_own_args)
+  .check_own_args(names(call), drop)
+  given <- NULL
   plots <- lapply(levels, function(lv) {
     cl <- call
     cl$data <- dplyr::filter(data, !!gv == lv)
     cl$title <- as.character(lv)
-    plot <- .call_ggstatsplot(upstream, cl, env, drop = drop)
-    plot <- .to_raincloud(plot, paired, cloud.args, box.args, rain.args, orientation)
-    .finish(plot, call)
+    res <- .call_ggstatsplot(upstream, cl, env, drop = drop)
+    given <<- res$given
+    .to_raincloud(res$plot, paired, cloud.args, box.args, rain.args, orientation)
   })
-  ggstatsplot::combine_plots(plots, plotgrid.args = plotgrid.args, annotation.args = annotation.args)
+  combined <- ggstatsplot::combine_plots(plots, plotgrid.args = plotgrid.args, annotation.args = annotation.args)
+  .finish(combined, given)
 }
 
 .default_rain_args <- list(
@@ -97,6 +100,20 @@ grouped_ggwithinrain <- function(data, ..., grouping.var, plotgrid.args = list()
 .rain_nudge <- -0.22
 
 .rain_own_args <- c("cloud.args", "box.args", "rain.args", "orientation")
+
+# BetterGG's own arguments come after `...`, where R does not match partial
+# names; an abbreviation would otherwise be silently ignored.
+.check_own_args <- function(supplied, own) {
+  supplied <- setdiff(supplied, c("", own))
+  for (nm in supplied) {
+    hit <- own[startsWith(own, nm)]
+    if (length(hit)) {
+      stop("BetterGG: argument '", nm, "' looks like an abbreviation of '", hit[1],
+        "'; please write it in full.", call. = FALSE)
+    }
+  }
+  invisible(TRUE)
+}
 
 #' @importFrom rlang .data
 NULL

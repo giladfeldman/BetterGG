@@ -87,20 +87,65 @@ scale_colour_bgg <- function(palette = "okabe_ito", ...) {
   )
 }
 
-# Replace the plot's discrete colour/fill scales with the BetterGG palette,
-# keeping each scale's other settings (name, labels, guide).
+# Replace the discrete colour/fill scales that ggstatsplot itself created
+# (via paletteer) with the BetterGG palette, keeping each scale's other
+# settings. A scale the user added (e.g. through `ggplot.component`) is left
+# alone. In grouped plots the colours are assigned by group NAME across all
+# panels, so a group keeps one colour even when it is missing from a panel.
 .apply_palette <- function(plot, palette) {
   if (is.null(palette)) return(plot)
+  panels <- if (inherits(plot, "patchwork")) c(plot$patches$plots, list(plot)) else list(plot)
+  named <- list()
+  if (length(panels) > 1L) {
+    for (aes in c("colour", "fill")) {
+      lv <- .merge_orders(lapply(panels, .scale_limits, aes = aes))
+      if (length(lv)) named[[aes]] <- stats::setNames(bgg_palette(palette, length(lv)), lv)
+    }
+  }
+  recolour <- function(p) {
+    if (!inherits(p, "ggplot")) return(p)
+    for (aes in c("colour", "fill")) {
+      sc <- p$scales$get_scales(aes)
+      if (is.null(sc) || !sc$is_discrete() || !.from_ggstatsplot(sc)) next
+      new <- sc$clone()
+      pal <- named[[aes]]
+      new$palette <- if (is.null(pal)) function(n) bgg_palette(palette, n) else function(n) pal
+      p <- suppressMessages(p + new)
+    }
+    p
+  }
   if (inherits(plot, "patchwork") && length(plot$patches$plots)) {
-    plot$patches$plots <- lapply(plot$patches$plots, .apply_palette, palette = palette)
+    plot$patches$plots <- lapply(plot$patches$plots, recolour)
   }
-  if (!inherits(plot, "ggplot")) return(plot)
-  for (aes in c("colour", "fill")) {
-    sc <- plot$scales$get_scales(aes)
-    if (is.null(sc) || !sc$is_discrete()) next
-    new <- sc$clone()
-    new$palette <- function(n) bgg_palette(palette, n)
-    plot <- suppressMessages(plot + new)
+  recolour(plot)
+}
+
+.from_ggstatsplot <- function(sc) {
+  any(grepl("paletteer", deparse(sc$call), fixed = TRUE))
+}
+
+# Levels shown by a panel's discrete colour/fill scale (in display order).
+.scale_limits <- function(p, aes) {
+  if (!inherits(p, "ggplot")) return(NULL)
+  sc <- p$scales$get_scales(aes)
+  if (is.null(sc) || !sc$is_discrete() || !.from_ggstatsplot(sc)) return(NULL)
+  p$patches <- NULL
+  b <- suppressWarnings(suppressMessages(ggplot2::ggplot_build(p)))
+  b$plot$scales$get_scales(aes)$get_limits()
+}
+
+# Merge each panel's level order into one order: a level missing from the
+# first panel goes right after the level that precedes it in a panel that has
+# it (or first, if nothing precedes it). Panels 6,8 and 4,6,8 give 4,6,8.
+.merge_orders <- function(orders) {
+  out <- character()
+  for (o in orders) {
+    o <- as.character(o)
+    for (i in seq_along(o)) {
+      if (o[i] %in% out) next
+      prev <- if (i > 1L) match(o[i - 1L], out) else 0L
+      out <- append(out, o[i], after = if (is.na(prev)) length(out) else prev)
+    }
   }
-  plot
+  out
 }

@@ -22,13 +22,7 @@ save_figure <- function(plot, file, width = "double", height = NULL, dpi = 600, 
   sizes <- c(single = 3.5, onehalf = 5.5, double = 7.2)
   w <- if (is.character(width)) sizes[[match.arg(width, names(sizes))]] else width
   h <- height %||% (w * 3 / 4)
-  if (!is.null(family)) {
-    plot <- if (inherits(plot, "patchwork")) {
-      plot & ggplot2::theme(text = ggplot2::element_text(family = family))
-    } else {
-      plot + ggplot2::theme(text = ggplot2::element_text(family = family))
-    }
-  }
+  if (!is.null(family)) plot <- .set_family(plot, family)
   ext <- tolower(tools::file_ext(file))
   device <- switch(ext,
     pdf = grDevices::cairo_pdf,
@@ -40,4 +34,26 @@ save_figure <- function(plot, file, width = "double", height = NULL, dpi = 600, 
   )
   ggplot2::ggsave(file, plot, device = device, width = w, height = h, units = "in", dpi = dpi)
   invisible(file)
+}
+
+# One font everywhere: theme text (titles, axes, subtitle) and the text drawn
+# inside the panel by geoms (centrality labels, bracket labels, pie labels).
+.set_family <- function(plot, family) {
+  one <- function(p) {
+    if (!inherits(p, "ggplot")) return(p)
+    p$layers <- lapply(p$layers, function(l) {
+      takes_family <- "family" %in% c(names(l$geom$default_aes), l$geom$parameters(TRUE))
+      if (!takes_family) return(l)
+      new <- ggplot2::ggproto(NULL, l)
+      new$aes_params <- utils::modifyList(l$aes_params, list(family = family))
+      if ("family" %in% names(l$geom_params)) new$geom_params$family <- family
+      new
+    })
+    p + ggplot2::theme(text = ggplot2::element_text(family = family))
+  }
+  if (inherits(plot, "patchwork")) {
+    plot$patches$plots <- lapply(plot$patches$plots, one)
+    plot <- plot & ggplot2::theme(text = ggplot2::element_text(family = family))
+  }
+  one(plot)
 }

@@ -39,6 +39,18 @@ test_that("a stale or mismatched exact value is never substituted", {
   expect_warning(BetterGG:::.rewrite(e, NA_real_, 3L, "test"), "unchanged")
 })
 
+test_that("a p label in an unexpected form warns instead of passing silently", {
+  e <- quote(list(italic(p) <= 0.04))
+  expect_warning(out <- BetterGG:::.rewrite(e, 0.04, 3L, "test"), "not in the form")
+  expect_identical(out, e)
+})
+
+test_that("default scatterplot (with marginal histograms) is converted", {
+  set.seed(123)
+  p <- suppressWarnings(ggscatterstats(mtcars, wt, mpg))
+  expect_identical(p_texts(p), ".001")
+})
+
 test_that("consistency check matches ggstatsplot's own rounding", {
   expect_true(BetterGG:::.consistent(0.0456, "0.05"))
   expect_true(BetterGG:::.consistent(1.234e-6, "1.23e-06"))

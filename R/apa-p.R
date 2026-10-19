@@ -47,8 +47,7 @@ apa_p <- function(plot, digits = 3L) {
   }
   if (!inherits(plot, "ggplot")) return(plot)
 
-  stats <- ggstatsplot::extract_stats(plot)
-  if (inherits(plot, "patchwork")) stats <- .stats_of_single(plot)
+  stats <- if (inherits(plot, "patchwork")) .stats_of_single(plot) else ggstatsplot::extract_stats(plot)
 
   # 1. subtitle (and caption, in case a frequentist test sits there)
   for (slot in c("subtitle", "caption")) {
@@ -85,6 +84,7 @@ apa_p <- function(plot, digits = 3L) {
       for (col in names(data)) {
         if (!any(vapply(data[[col]], .has_p, logical(1)))) next
         out <- lapply(seq_len(nrow(data)), function(i) {
+          if (!.has_p(data[[col]][[i]])) return(data[[col]][[i]])
           .rewrite(data[[col]][[i]], data$p.value[i], digits, where = paste0("label (", col, ")"))
         })
         data[[col]] <- if (is.character(data[[col]])) unlist(out) else out
@@ -134,6 +134,14 @@ apa_p <- function(plot, digits = 3L) {
   state <- new.env()
   state$ok <- TRUE
   out <- .walk(expr, raw, digits, state)
+  if (is.null(state$shown)) {
+    warning(
+      "BetterGG: the ", where, " mentions p but not in the form italic(p) == \"value\"; ",
+      "left unchanged.",
+      call. = FALSE
+    )
+    return(x)
+  }
   if (!state$ok) {
     warning(
       "BetterGG: left the p-value in the ", where, " unchanged (shown value ",

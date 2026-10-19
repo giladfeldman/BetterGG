@@ -26,45 +26,63 @@
 #' @export
 ggbetweenrain <- function(..., cloud.args = list(), box.args = list(),
                           rain.args = list(), orientation = c("vertical", "horizontal")) {
-  plot <- getExportedValue("ggstatsplot", "ggbetweenstats")(...)
+  call <- sys.call()
+  plot <- .call_ggstatsplot("ggbetweenstats", call, parent.frame(), drop = .rain_own_args)
   plot <- .to_raincloud(plot, paired = FALSE, cloud.args, box.args, rain.args, match.arg(orientation))
-  if (isTRUE(getOption("BetterGG.apa", TRUE))) apa_p(plot) else plot
+  .finish(plot, call)
 }
 
 #' @rdname ggbetweenrain
 #' @export
 ggwithinrain <- function(..., cloud.args = list(), box.args = list(),
                          rain.args = list(), orientation = c("vertical", "horizontal")) {
-  plot <- getExportedValue("ggstatsplot", "ggwithinstats")(...)
+  call <- sys.call()
+  plot <- .call_ggstatsplot("ggwithinstats", call, parent.frame(), drop = .rain_own_args)
   plot <- .to_raincloud(plot, paired = TRUE, cloud.args, box.args, rain.args, match.arg(orientation))
-  if (isTRUE(getOption("BetterGG.apa", TRUE))) apa_p(plot) else plot
+  .finish(plot, call)
 }
 
 #' @rdname ggbetweenrain
-#' @param grouping.var,plotgrid.args,annotation.args As in
-#'   [ggstatsplot::grouped_ggbetweenstats()].
+#' @param data,grouping.var,plotgrid.args,annotation.args As in
+#'   [ggstatsplot::grouped_ggbetweenstats()]: one raincloud per level of
+#'   `grouping.var`, titled by the level, combined with
+#'   [ggstatsplot::combine_plots()].
 #' @export
 grouped_ggbetweenrain <- function(data, ..., grouping.var, plotgrid.args = list(),
-                                  annotation.args = list()) {
-  .grouped_rain(ggbetweenrain, data, {{ grouping.var }}, plotgrid.args, annotation.args, ...)
+                                  annotation.args = list(), cloud.args = list(), box.args = list(),
+                                  rain.args = list(), orientation = c("vertical", "horizontal")) {
+  .grouped_rain("ggbetweenstats", FALSE, match.call(), parent.frame(), data,
+    rlang::enquo(grouping.var), plotgrid.args, annotation.args,
+    cloud.args, box.args, rain.args, match.arg(orientation))
 }
 
 #' @rdname ggbetweenrain
 #' @export
 grouped_ggwithinrain <- function(data, ..., grouping.var, plotgrid.args = list(),
-                                 annotation.args = list()) {
-  .grouped_rain(ggwithinrain, data, {{ grouping.var }}, plotgrid.args, annotation.args, ...)
+                                 annotation.args = list(), cloud.args = list(), box.args = list(),
+                                 rain.args = list(), orientation = c("vertical", "horizontal")) {
+  .grouped_rain("ggwithinstats", TRUE, match.call(), parent.frame(), data,
+    rlang::enquo(grouping.var), plotgrid.args, annotation.args,
+    cloud.args, box.args, rain.args, match.arg(orientation))
 }
 
-# Same panel logic as ggstatsplot's grouped_* functions: one plot per level,
-# titled by the level, combined with ggstatsplot::combine_plots().
-.grouped_rain <- function(.f, data, grouping.var, plotgrid.args, annotation.args, ...) {
-  gv <- rlang::enquo(grouping.var)
+# One panel per level, titled by the level, combined with
+# ggstatsplot::combine_plots() -- the same panel logic as ggstatsplot's
+# grouped_* functions. Each panel re-runs the user's own call on that level's
+# rows, so tidy-eval arguments keep working.
+.grouped_rain <- function(upstream, paired, call, env, data, gv, plotgrid.args,
+                          annotation.args, cloud.args, box.args, rain.args, orientation) {
   data <- dplyr::filter(data, !is.na(!!gv))
   levels <- unique(dplyr::pull(data, !!gv))
   levels <- if (is.factor(levels)) levels(droplevels(levels)) else sort(levels)
+  drop <- c("grouping.var", "plotgrid.args", "annotation.args", .rain_own_args)
   plots <- lapply(levels, function(lv) {
-    .f(data = dplyr::filter(data, !!gv == lv), title = as.character(lv), ...)
+    cl <- call
+    cl$data <- dplyr::filter(data, !!gv == lv)
+    cl$title <- as.character(lv)
+    plot <- .call_ggstatsplot(upstream, cl, env, drop = drop)
+    plot <- .to_raincloud(plot, paired, cloud.args, box.args, rain.args, orientation)
+    .finish(plot, call)
   })
   ggstatsplot::combine_plots(plots, plotgrid.args = plotgrid.args, annotation.args = annotation.args)
 }
@@ -77,6 +95,8 @@ grouped_ggwithinrain <- function(data, ..., grouping.var, plotgrid.args = list()
 )
 
 .rain_nudge <- -0.22
+
+.rain_own_args <- c("cloud.args", "box.args", "rain.args", "orientation")
 
 #' @importFrom rlang .data
 NULL

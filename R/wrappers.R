@@ -1,19 +1,47 @@
-# Each wrapper looks up the 'ggstatsplot' function when it is called, not when
-# BetterGG is installed, so updating 'ggstatsplot' is enough to get its fixes.
+# Each wrapper rebuilds the user's own call with ggstatsplot:: in front and
+# evaluates it where the user wrote it, so tidy-eval arguments (bare names,
+# !!, {{ }}) behave exactly as with ggstatsplot. The 'ggstatsplot' function is
+# looked up when called, not when BetterGG is installed, so updating
+# 'ggstatsplot' is enough to get its fixes.
 .wrap <- function(name) {
   force(name)
   function(...) {
-    plot <- getExportedValue("ggstatsplot", name)(...)
-    if (isTRUE(getOption("BetterGG.apa", TRUE))) apa_p(plot) else plot
+    call <- sys.call()
+    plot <- .call_ggstatsplot(name, call, parent.frame())
+    .finish(plot, call)
   }
 }
 
-#' 'ggstatsplot' functions with APA-style p-values
+.call_ggstatsplot <- function(name, call, env, drop = character()) {
+  call[[1]] <- call("::", as.name("ggstatsplot"), as.name(name))
+  for (d in intersect(drop, names(call))) call[[d]] <- NULL
+  if (isTRUE(getOption("BetterGG.theme", TRUE)) && !"ggtheme" %in% names(call)) {
+    call$ggtheme <- theme_apa()
+  }
+  eval(call, env)
+}
+
+# Palette (unless the user chose one) and APA p-values.
+.finish <- function(plot, call) {
+  if (!any(c("palette", "package") %in% names(call))) {
+    plot <- .apply_palette(plot, getOption("BetterGG.palette", "okabe_ito"))
+  }
+  if (isTRUE(getOption("BetterGG.apa", TRUE))) plot <- apa_p(plot)
+  plot
+}
+
+#' 'ggstatsplot' functions with APA styling
 #'
-#' Same arguments and output as the 'ggstatsplot' function of the same name
-#' (see its help page, e.g. [ggstatsplot::ggbetweenstats()]), with the plot
-#' passed through [apa_p()]. Set `options(BetterGG.apa = FALSE)` to get the
-#' unchanged 'ggstatsplot' output.
+#' Same arguments and statistics as the 'ggstatsplot' function of the same
+#' name (see its help page, e.g. [ggstatsplot::ggbetweenstats()]), with three
+#' defaults changed, each of which you can switch off:
+#'
+#' * p-values in APA style ([apa_p()]); `options(BetterGG.apa = FALSE)`.
+#' * the [theme_apa()] theme, unless you pass `ggtheme =`;
+#'   `options(BetterGG.theme = FALSE)`.
+#' * the colourblind-safe Okabe-Ito palette ([bgg_palette()]), unless you pass
+#'   `palette =`; `options(BetterGG.palette = "viridis")` or `"grey"` to
+#'   change it, `NULL` to keep 'ggstatsplot''s palette.
 #'
 #' @param ... Passed to the 'ggstatsplot' function of the same name.
 #' @return A `ggplot` (or `patchwork`) object.
@@ -68,3 +96,9 @@ grouped_ggpiestats <- .wrap("grouped_ggpiestats")
 #' @rdname ggstatsplot-apa
 #' @export
 grouped_ggbarstats <- .wrap("grouped_ggbarstats")
+#' @rdname ggstatsplot-apa
+#' @export
+ggcorrmat <- .wrap("ggcorrmat")
+#' @rdname ggstatsplot-apa
+#' @export
+grouped_ggcorrmat <- .wrap("grouped_ggcorrmat")

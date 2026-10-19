@@ -28,7 +28,11 @@ grouped_ggbetweenrain(
   ...,
   grouping.var,
   plotgrid.args = list(),
-  annotation.args = list()
+  annotation.args = list(),
+  cloud.args = list(),
+  box.args = list(),
+  rain.args = list(),
+  orientation = c("vertical", "horizontal")
 )
 
 grouped_ggwithinrain(
@@ -36,7 +40,11 @@ grouped_ggwithinrain(
   ...,
   grouping.var,
   plotgrid.args = list(),
-  annotation.args = list()
+  annotation.args = list(),
+  cloud.args = list(),
+  box.args = list(),
+  rain.args = list(),
+  orientation = c("vertical", "horizontal")
 )
 }
 \arguments{
@@ -52,8 +60,10 @@ within-subjects, where the points stay linked by their subject lines).}
 \item{orientation}{\code{"vertical"} (default, like 'ggstatsplot') or
 \code{"horizontal"} (groups on the y axis, clouds above the rain).}
 
-\item{grouping.var, plotgrid.args, annotation.args}{As in
-\code{\link[ggstatsplot:grouped_ggbetweenstats]{ggstatsplot::grouped_ggbetweenstats()}}.}
+\item{data, grouping.var, plotgrid.args, annotation.args}{As in
+\code{\link[ggstatsplot:grouped_ggbetweenstats]{ggstatsplot::grouped_ggbetweenstats()}}: one raincloud per level of
+\code{grouping.var}, titled by the level, combined with
+\code{\link[ggstatsplot:combine_plots]{ggstatsplot::combine_plots()}}.}
 }
 \value{
 A \code{ggplot} object.

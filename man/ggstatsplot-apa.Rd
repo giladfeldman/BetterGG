@@ -17,7 +17,9 @@
 \alias{grouped_ggdotplotstats}
 \alias{grouped_ggpiestats}
 \alias{grouped_ggbarstats}
-\title{'ggstatsplot' functions with APA-style p-values}
+\alias{ggcorrmat}
+\alias{grouped_ggcorrmat}
+\title{'ggstatsplot' functions with APA styling}
 \usage{
 ggbetweenstats(...)
 
@@ -48,6 +50,10 @@ grouped_ggdotplotstats(...)
 grouped_ggpiestats(...)
 
 grouped_ggbarstats(...)
+
+ggcorrmat(...)
+
+grouped_ggcorrmat(...)
 }
 \arguments{
 \item{...}{Passed to the 'ggstatsplot' function of the same name.}
@@ -56,10 +62,19 @@ grouped_ggbarstats(...)
 A \code{ggplot} (or \code{patchwork}) object.
 }
 \description{
-Same arguments and output as the 'ggstatsplot' function of the same name
-(see its help page, e.g. \code{\link[ggstatsplot:ggbetweenstats]{ggstatsplot::ggbetweenstats()}}), with the plot
-passed through \code{\link[=apa_p]{apa_p()}}. Set \code{options(BetterGG.apa = FALSE)} to get the
-unchanged 'ggstatsplot' output.
+Same arguments and statistics as the 'ggstatsplot' function of the same
+name (see its help page, e.g. \code{\link[ggstatsplot:ggbetweenstats]{ggstatsplot::ggbetweenstats()}}), with three
+defaults changed, each of which you can switch off:
+}
+\details{
+\itemize{
+\item p-values in APA style (\code{\link[=apa_p]{apa_p()}}); \code{options(BetterGG.apa = FALSE)}.
+\item the \code{\link[=theme_apa]{theme_apa()}} theme, unless you pass \verb{ggtheme =};
+\code{options(BetterGG.theme = FALSE)}.
+\item the colourblind-safe Okabe-Ito palette (\code{\link[=bgg_palette]{bgg_palette()}}), unless you pass
+\verb{palette =}; \code{options(BetterGG.palette = "viridis")} or \code{"grey"} to
+change it, \code{NULL} to keep 'ggstatsplot''s palette.
+}
 }
 \examples{
 library(BetterGG)

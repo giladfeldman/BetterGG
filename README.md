@@ -50,6 +50,26 @@ one ggstatsplot reports for the same call. With two within-subject conditions
 the first is mirrored so each subject's line joins the two inner rains.
 Tune the parts with `cloud.args`, `box.args`, `rain.args`.
 
+## Publication style
+
+Every BetterGG plot also gets, by default:
+
+- **`theme_apa()`**: white background, no grid lines, black axes, sans-serif
+  font, plain axis titles (APA 7 figure guidelines). Pass `ggtheme =` to use
+  your own, or `options(BetterGG.theme = FALSE)`.
+- **Colourblind-safe colours**: the Okabe-Ito palette. Pass `palette =` to use
+  your own, or `options(BetterGG.palette = "viridis")` (also survives
+  greyscale printing), `"grey"` (black-and-white print), or `NULL`
+  (ggstatsplot's colours).
+
+Save at journal size with embedded fonts:
+
+```r
+save_figure(plot, "figure1.pdf", width = "double")              # 7.2 in, vector, fonts embedded
+save_figure(plot, "figure1.png", width = "single", dpi = 600)   # 3.5 in raster
+save_figure(plot, "figure1.tiff", width = "onehalf", family = "Arial")
+```
+
 ## Install (from this folder; needs R >= 4.5, like ggstatsplot 1.1.3)
 
 ```r
@@ -60,4 +80,4 @@ install.packages(".", repos = NULL, type = "source")
 
 1. APA p-values (done)
 2. Raincloud plots (done)
-3. Publication-ready colour palettes and fonts
+3. Publication-ready colour palettes and fonts (done)

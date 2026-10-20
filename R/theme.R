@@ -42,12 +42,40 @@ theme_apa <- function(base_size = 12.5, base_family = bgg_font()) {
 #' Calibri is not recommended: with 'ggstatsplot''s formula-style subtitles it
 #' makes PNG/TIFF rendering fail ("Viewport has zero dimension(s)").
 #'
+#' R's base [grDevices::pdf()] and [grDevices::postscript()] devices cannot
+#' use system fonts, so the first call registers the font there as an alias
+#' of Helvetica (only if you have not registered it yourself). Plots then
+#' draw on those devices in Helvetica instead of failing; every other device,
+#' and [save_figure()], uses the real font.
+#'
 #' @return A font family name.
 #' @export
 bgg_font <- function() {
   want <- getOption("BetterGG.font", "Trebuchet MS")
   if (identical(want, "")) return("")
-  if (want %in% systemfonts::system_fonts()$family) want else ""
+  if (!want %in% systemfonts::system_fonts()$family) return("")
+  .alias_for_base_pdf(want)
+  want
+}
+
+# R's base pdf() and postscript() devices only know their own Type 1 font
+# table, so a plot naming a system font they lack stops with "failed to find
+# or load PDF CID font". That device is the default for Rscript (Rplots.pdf)
+# and for R CMD check examples. Map the family to Helvetica there, only if the
+# user has not mapped it already; every other device (screen, png, ragg,
+# cairo_pdf, save_figure) still draws the real font.
+.alias_for_base_pdf <- function(family) {
+  if (!family %in% names(grDevices::pdfFonts())) {
+    spec <- list(grDevices::pdfFonts()$Helvetica)
+    names(spec) <- family
+    do.call(grDevices::pdfFonts, spec)
+  }
+  if (!family %in% names(grDevices::postscriptFonts())) {
+    spec <- list(grDevices::postscriptFonts()$Helvetica)
+    names(spec) <- family
+    do.call(grDevices::postscriptFonts, spec)
+  }
+  invisible(family)
 }
 
 #' BetterGG palettes

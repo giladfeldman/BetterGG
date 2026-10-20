@@ -155,3 +155,22 @@ test_that("BetterGG leaves the random-number stream untouched (same seed, same B
   set.seed(7)
   expect_identical(runif(1), x)
 })
+
+test_that("plots draw on R's base pdf() device (Rscript default) without a font error", {
+  f <- withr::local_tempfile(fileext = ".pdf")
+  grDevices::pdf(f)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  set.seed(1)
+  p <- suppressWarnings(ggbetweenrain(mtcars, cyl, mpg))
+  expect_no_error(suppressWarnings(print(p)))
+  if (!identical(bgg_font(), "")) expect_true(bgg_font() %in% names(grDevices::pdfFonts()))
+})
+
+test_that("the pdf() font alias never overwrites a mapping the user registered", {
+  fam <- "BetterGG Test Family"
+  withr::local_options(BetterGG.font = fam)
+  user_map <- grDevices::pdfFonts()$Courier
+  do.call(grDevices::pdfFonts, stats::setNames(list(user_map), fam))
+  BetterGG:::.alias_for_base_pdf(fam)
+  expect_identical(grDevices::pdfFonts(fam)[[1]], user_map)
+})

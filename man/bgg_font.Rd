@@ -16,4 +16,10 @@ sans-serif font). Change it with \code{options(BetterGG.font = "Arial")}.
 \details{
 Calibri is not recommended: with 'ggstatsplot''s formula-style subtitles it
 makes PNG/TIFF rendering fail ("Viewport has zero dimension(s)").
+
+R's base \code{\link[grDevices:pdf]{grDevices::pdf()}} and \code{\link[grDevices:postscript]{grDevices::postscript()}} devices cannot
+use system fonts, so the first call registers the font there as an alias
+of Helvetica (only if you have not registered it yourself). Plots then
+draw on those devices in Helvetica instead of failing; every other device,
+and \code{\link[=save_figure]{save_figure()}}, uses the real font.
 }

@@ -82,8 +82,8 @@
 #' * p-values in APA style ([apa_p()]); `options(BetterGG.apa = FALSE)`.
 #' * the [theme_apa()] theme, unless you pass `ggtheme =`;
 #'   `options(BetterGG.theme = FALSE)`.
-#' * the colourblind-safe Okabe-Ito palette ([bgg_palette()]), unless you pass
-#'   `palette =`; `options(BetterGG.palette = "viridis")` or `"grey"` to
+#' * the NEJM palette ([bgg_palette()]), unless you pass `palette =`;
+#'   `options(BetterGG.palette = "grey")`, `"okabe_ito"` or `"viridis"` to
 #'   change it, `NULL` to keep 'ggstatsplot''s palette.
 #'
 #' @param ... Passed to the 'ggstatsplot' function of the same name.

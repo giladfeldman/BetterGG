@@ -71,8 +71,8 @@ defaults changed, each of which you can switch off:
 \item p-values in APA style (\code{\link[=apa_p]{apa_p()}}); \code{options(BetterGG.apa = FALSE)}.
 \item the \code{\link[=theme_apa]{theme_apa()}} theme, unless you pass \verb{ggtheme =};
 \code{options(BetterGG.theme = FALSE)}.
-\item the colourblind-safe Okabe-Ito palette (\code{\link[=bgg_palette]{bgg_palette()}}), unless you pass
-\verb{palette =}; \code{options(BetterGG.palette = "viridis")} or \code{"grey"} to
+\item the NEJM palette (\code{\link[=bgg_palette]{bgg_palette()}}), unless you pass \verb{palette =};
+\code{options(BetterGG.palette = "grey")}, \code{"okabe_ito"} or \code{"viridis"} to
 change it, \code{NULL} to keep 'ggstatsplot''s palette.
 }
 }

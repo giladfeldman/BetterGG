@@ -174,3 +174,12 @@ test_that("the pdf() font alias never overwrites a mapping the user registered",
   BetterGG:::.alias_for_base_pdf(fam)
   expect_identical(grDevices::pdfFonts(fam)[[1]], user_map)
 })
+
+test_that("the wrapper help page names the palette that is really the default", {
+  rd <- testthat::test_path("..", "..", "man", "ggstatsplot-apa.Rd")
+  testthat::skip_if_not(file.exists(rd), "man/ not available (installed-package test run)")
+  txt <- paste(readLines(rd, warn = FALSE), collapse = " ")
+  expect_identical(eval(formals(scale_colour_bgg)$palette), "nejm")
+  expect_match(txt, "NEJM palette", fixed = TRUE)
+  expect_no_match(txt, "colourblind-safe Okabe-Ito palette", fixed = TRUE)
+})

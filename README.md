@@ -66,8 +66,10 @@ Every BetterGG plot also gets, by default:
   in black-and-white. Other palettes: `"okabe_ito"`, `"viridis"`; `NULL`
   keeps ggstatsplot's colours. Pass `palette =` to use your own.
 
-The defaults never change a number: with the same `set.seed()`, Bayesian and
-bootstrap results are identical to calling ggstatsplot directly.
+The tests compare statistical results against ggstatsplot under matching seeds.
+Record exact dependencies when reproducing an analysis. The random stream after
+a plotting call can differ because the plotting defaults use different jitter
+objects; reset the seed before each independent analysis.
 
 Save at journal size with embedded fonts:
 
@@ -77,14 +79,50 @@ save_figure(plot, "figure1.png", width = "single", dpi = 600)   # 3.5 in raster
 save_figure(plot, "figure1.tiff", width = "onehalf", family = "Arial")
 ```
 
-## Install (from this folder; needs R >= 4.5, like ggstatsplot 1.1.3)
+## Install
+
+Requires R >= 4.5 and ggstatsplot >= 1.1.3. This is the prepared 0.1.0 release
+candidate. The GitHub command becomes available once the public release is
+published:
+
+```r
+install.packages("remotes")
+remotes::install_github("giladfeldman/BetterGG@v0.1.0", upgrade = "never")
+```
+
+To install a downloaded source checkout:
 
 ```r
 install.packages(".", repos = NULL, type = "source")
 ```
 
-## Planned
+## Included in 0.1.0
 
-1. APA p-values (done)
-2. Raincloud plots (done)
-3. Publication-ready colour palettes and fonts (done)
+1. APA p-values from exact computed values
+2. Between- and within-subject raincloud plots
+3. Publication colour palettes, fonts, and figure export
+
+## Reproducibility and validation
+
+BetterGG delegates calculations to the installed ggstatsplot version. Record
+`sessionInfo()` with your analysis and retain exact dependency versions. Future
+ggstatsplot updates can change results or formatting; a BetterGG tag alone does
+not freeze its dependencies. Bayesian/bootstrap comparisons require matching
+random seeds.
+
+The test suite checks exact-value APA formatting, statistical identity under
+matching seeds, argument forwarding, raincloud geometry, palettes, fonts, and
+exports. Run `Rscript tools/check.R` followed by `R CMD build .` and
+`R CMD check --no-manual BetterGG_0.1.0.tar.gz` in native R. Browser/WebR support
+is not claimed by this release.
+
+## Known limitations
+
+- Use full argument names such as `palette =` and `ggtheme =` in grouped
+  wrappers. Abbreviated names forwarded through `...` can be replaced by the
+  defaults.
+- Font rendering depends on installed fonts and the graphics device. Check
+  journal-size exports after changing `family` or the default font option.
+- Very light greyscale rain dots may need manual contrast adjustment.
+- This release formats p-values. It does not remove leading zeroes from every
+  other bounded statistic.

@@ -1,7 +1,12 @@
-^plan\.md$
-^tmp$
-^README\.md$
 ^\.git.*$
-^TODO\.md$
+^\.github$
+^README\.md$
+^LICENSE\.md$
+^tools$
+^tmp$
+^.*\.Rcheck$
+^BetterGG_.*\.tar\.gz$
 ^\.claude$
 ^communications$
+^TODO\.md$
+^plan\.md$

@@ -1,6 +1,6 @@
 Package: BetterGG
 Title: APA-Style Additions to 'ggstatsplot'
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R:
     person("Gilad", "Feldman", email = "giladfel@gmail.com", role = c("aut", "cre"))
 Description: An add-on layer for 'ggstatsplot'. Loads after 'ggstatsplot' and
@@ -9,6 +9,8 @@ Description: An add-on layer for 'ggstatsplot'. Loads after 'ggstatsplot' and
     re-formatted from the exact value 'ggstatsplot' computed, never from the
     rounded text shown on the plot.
 License: MIT + file LICENSE
+URL: https://github.com/giladfeldman/BetterGG
+BugReports: https://github.com/giladfeldman/BetterGG/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends:

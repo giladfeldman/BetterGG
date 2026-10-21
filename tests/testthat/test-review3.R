@@ -1,4 +1,4 @@
-# Regressions for the 2026-10-19 second-model review (Sonnet, tier 2), round 3.
+# Regressions for argument forwarding, palettes, grouped panels, and fonts.
 cols <- function(p, a = "colour") unique(unlist(lapply(ggplot2::ggplot_build(p)$data, `[[`, a)))
 oi3 <- bgg_palette("nejm", 3)
 

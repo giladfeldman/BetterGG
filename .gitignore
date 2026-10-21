@@ -1,8 +1,11 @@
-.Rproj.user
 .Rhistory
 .RData
+.Rproj.user/
 tmp/
 *.Rcheck/
 BetterGG_*.tar.gz
-
+Rplots.pdf
+.claude/
 communications/
+TODO.md
+plan.md

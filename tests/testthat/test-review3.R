@@ -64,8 +64,9 @@ test_that("F6: save_figure(family =) uses one font for all text", {
     }, ""))
   }
   pf <- withr::local_tempfile(fileext = ".pdf")
-  save_figure(suppressWarnings(ggbetweenstats(mtcars, cyl, mpg)), pf, family = "Times New Roman")
+  family <- test_font_family("serif")
+  save_figure(suppressWarnings(ggbetweenstats(mtcars, cyl, mpg)), pf, family = family)
   f <- fonts(pf)
   expect_false(any(grepl("Arial", f)))
-  expect_true(any(grepl("TimesNewRoman", f)))
+  expect_true(any(grepl(test_font_name(family), f, fixed = TRUE)))
 })

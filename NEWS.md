@@ -8,4 +8,7 @@
 - Document grouped argument abbreviations, Windows font rendering, and random
   stream limitations.
 
+- Make font export tests use installed font identities across operating systems.
+  Test missing-default fallback explicitly, with no skipped font assertions.
+
 Prepared release candidate; publication and remote installation checks are pending.

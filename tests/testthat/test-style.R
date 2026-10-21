@@ -75,10 +75,11 @@ test_that("save_figure writes vector PDF with embedded fonts and sized rasters",
   set.seed(1)
   p <- suppressWarnings(ggbetweenstats(mtcars, cyl, mpg, results.subtitle = FALSE))
   pdf_file <- withr::local_tempfile(fileext = ".pdf")
-  save_figure(p, pdf_file, width = "single", family = "Arial")
+  family <- test_font_family("sans")
+  save_figure(p, pdf_file, width = "single", family = family)
   raw <- readBin(pdf_file, "raw", file.size(pdf_file))
   expect_true(length(grepRaw("/FontFile2", raw, fixed = TRUE)) > 0) # embedded TrueType font program
-  expect_true(length(grepRaw("Arial", raw, fixed = TRUE)) > 0)
+  expect_true(length(grepRaw(test_font_name(family), raw, fixed = TRUE)) > 0)
 
   png_file <- withr::local_tempfile(fileext = ".png")
   save_figure(p, png_file, width = "double", dpi = 300)
@@ -103,6 +104,9 @@ test_that("results (subtitle, caption) are centred; font and size as approved", 
   if ("Trebuchet MS" %in% systemfonts::system_fonts()$family) {
     expect_identical(bgg_font(), "Trebuchet MS")
     expect_identical(ggplot2::calc_element("text", th)$family, "Trebuchet MS")
+  } else {
+    expect_identical(bgg_font(), "")
+    expect_identical(ggplot2::calc_element("text", th)$family, "")
   }
   old <- options(BetterGG.font = "No Such Font 123")
   on.exit(options(old))
@@ -110,11 +114,12 @@ test_that("results (subtitle, caption) are centred; font and size as approved", 
 })
 
 test_that("in-panel labels use the BetterGG font", {
-  skip_if_not("Trebuchet MS" %in% systemfonts::system_fonts()$family)
+  family <- test_font_family("sans")
+  withr::local_options(BetterGG.font = family)
   set.seed(1)
   p <- suppressWarnings(ggbetweenstats(mtcars, cyl, mpg))
   lab <- Filter(function(l) inherits(l$geom, "GeomLabelRepel"), p$layers)[[1]]
-  expect_identical(lab$aes_params$family, "Trebuchet MS")
+  expect_identical(lab$aes_params$family, family)
 })
 
 test_that("greyscale option: only greys, darker outlines than fills, violins filled", {

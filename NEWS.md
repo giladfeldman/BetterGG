@@ -12,6 +12,8 @@
   confidence intervals; exact type III F tests via `drop1()`, not `emmeans::joint_tests()`, which
   stores F rounded to three decimals) and `ggreliability()` (item responses, item-rest correlations,
   Cronbach's alpha, jamovi's reverse scoring).
+- Long facet titles in faceted recipes and `ggfactorialrain()` wrap at 30 characters instead of
+  being clipped at the panel edge.
 - `apa_p()` no longer warns about the significance threshold in `ggcorrmat()` captions.
 - The BetterGG font is registered for the Windows screen and `png()` devices (knitr's default on
   Windows), which removes "font family not found" warnings in knitted reports.

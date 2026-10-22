@@ -361,3 +361,18 @@ test_that("readable factor terms name the level and its reference", {
   env <- run_recipe(recipe_coefstats("model", name = "r", intercept = FALSE), model = model)
   expect_setequal(as.character(env$r_table$term), c("wt", "ammanual"))
 })
+
+test_that("long facet titles wrap instead of being clipped at the panel edge", {
+  d <- data.frame(score = c(1, 2, 3, 4, 5, 6),
+    panel = rep(c("A very long condition label that would be clipped", "Short"), 3))
+  env <- run_recipe(recipe_histostats("d", "score", name = "h", facet = "panel"), d = d)
+  labeller <- env$h_plot$facet$params$labeller
+  labels <- labeller(data.frame(panel = unique(d$panel)))[[1]]
+  expect_identical(labels[2], "Short")
+  expect_match(labels[1], "\n", fixed = TRUE)
+  expect_s3_class(ggplot2::ggplot_build(env$h_plot), "ggplot_built")
+  for (code in list(recipe_histostats("d", "x", facet = "f"), recipe_barstats("d", "a", "b", facet = "f"),
+    recipe_piestats("d", "a", "b"), recipe_factorialrain("d", "a", "y", facet = "f"))) {
+    expect_match(code, "labeller = ggplot2::label_wrap_gen(width = 30)", fixed = TRUE)
+  }
+})

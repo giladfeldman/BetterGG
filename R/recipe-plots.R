@@ -108,7 +108,7 @@ recipe_histostats <- function(data, x, name = "plot", type = "parametric", stats
         "    linewidth = 1, linetype = \"dashed\")"), name = name),
       .fill(paste0("  ggplot2::geom_label(data = {name}_centres, ggplot2::aes(x = value, y = Inf, label = label),\n",
         "    inherit.aes = FALSE, parse = TRUE, vjust = 1.2, size = 3, family = figure_font)"), name = name),
-      .fill("  ggplot2::facet_wrap(ggplot2::vars(.data[[{fs}]]))", fs = .lit(facet))
+      .fill("  ggplot2::facet_wrap(ggplot2::vars(.data[[{fs}]]), labeller = ggplot2::label_wrap_gen(width = 30))", fs = .lit(facet))
     ),
     .fill("  ggplot2::labs(x = {xlab}, y = \"count\", title = {title}, subtitle = {sub}, caption = {cap})",
       xlab = .lit(xlab), title = if (is.null(title)) "NULL" else .lit(title),
@@ -324,7 +324,7 @@ recipe_barstats <- function(data, x, y, name = "plot", counts = NULL, stats = FA
     "  ggplot2::theme(panel.grid.major.x = ggplot2::element_blank())",
     .fill("  ggplot2::guides(fill = ggplot2::guide_legend(title = {lt}))", lt = .lit(legend.title)),
     .fill("  ggplot2::scale_fill_manual(values = {name}_fills, name = \"\", drop = FALSE)", name = name),
-    if (!is.null(facet)) .fill("  ggplot2::facet_wrap(ggplot2::vars({F}))", F = .sym(facet)),
+    if (!is.null(facet)) .fill("  ggplot2::facet_wrap(ggplot2::vars({F}), labeller = ggplot2::label_wrap_gen(width = 30))", F = .sym(facet)),
     if (isTRUE(stats)) c(
       "  # proportion test in each bar",
       .fill(paste0("  ggplot2::geom_text(data = {name}_bar_tests, ggplot2::aes(x = {Y}, y = 1.05, label = p_label, fill = NULL),\n",
@@ -376,7 +376,7 @@ recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, sta
     "  # percentage labels",
     if (is.finite(max_labels)) .fill("  (if (nlevels({name}_cells[[{xs}]]) <= {max}) {label})", name = name,
       xs = .lit(x), max = .num(max_labels), label = label_layer) else paste0("  ", label_layer),
-    if (!is.null(y)) .fill("  ggplot2::facet_wrap(facets = ggplot2::vars({Y}))", Y = .sym(y)),
+    if (!is.null(y)) .fill("  ggplot2::facet_wrap(facets = ggplot2::vars({Y}), labeller = ggplot2::label_wrap_gen(width = 30))", Y = .sym(y)),
     "  ggplot2::coord_polar(theta = \"y\")",
     "  ggplot2::scale_y_continuous(breaks = NULL)",
     .fill("  ggplot2::scale_fill_manual(values = {name}_fills, name = \"\", drop = FALSE)", name = name),

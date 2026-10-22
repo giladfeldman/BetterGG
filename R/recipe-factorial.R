@@ -157,7 +157,7 @@ recipe_factorialrain <- function(data, x, y, colour = NULL, facet = NULL, covari
     "  theme_figure()",
     .fill("  ggplot2::theme(legend.position = {pos}, panel.grid.major.x = ggplot2::element_blank())",
       pos = if (is.null(colour)) "\"none\"" else "\"bottom\""),
-    if (!is.null(facet)) .fill("  ggplot2::facet_wrap(ggplot2::vars(.data[[{fs}]]))", fs = .lit(facet))
+    if (!is.null(facet)) .fill("  ggplot2::facet_wrap(ggplot2::vars(.data[[{fs}]]), labeller = ggplot2::label_wrap_gen(width = 30))", fs = .lit(facet))
   )
   plot <- .join_layers(paste0(name, "_plot"), layers)
   code <- .code(prep, "", stats_code, if (!is.null(stats_code)) "", "# 4. The figure", plot)

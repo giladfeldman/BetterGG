@@ -126,7 +126,7 @@ ggfactorialrain <- function(data, x, y, colour = NULL, facet = NULL, covariates 
       legend.position = if (is.null(colour)) "none" else "bottom",
       panel.grid.major.x = ggplot2::element_blank()
     )
-  if (!is.null(facet)) plot <- plot + ggplot2::facet_wrap(ggplot2::vars(.data[[facet]]))
+  if (!is.null(facet)) plot <- plot + ggplot2::facet_wrap(ggplot2::vars(.data[[facet]]), labeller = ggplot2::label_wrap_gen(width = 30))
   if (!identical(bgg_font(), "")) plot <- .set_family(plot, bgg_font())
   plot
 }

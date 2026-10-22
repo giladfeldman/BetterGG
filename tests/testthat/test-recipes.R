@@ -215,6 +215,7 @@ test_that("reliability recipe matches ggreliability and the alpha formula", {
   }
   expect_recipe_matches(strip(real), strip(env$r_plot))
   expect_identical(real$patches$annotation$subtitle, env$r_plot$patches$annotation$subtitle)
+  skip_if_not_installed("psych")
   # independent reference: psych::alpha on the reverse-keyed complete rows
   complete <- survey[stats::complete.cases(survey), ]
   complete$q3 <- min(complete$q3) + max(complete$q3) - complete$q3
@@ -257,6 +258,7 @@ test_that("one- and two-sided tests follow 'alternative'", {
 })
 
 test_that("the written-out NEJM palette is the ggsci palette", {
+  skip_if_not_installed("paletteer")
   expect_identical(bgg_palette("nejm", 8), substr(as.character(paletteer::paletteer_d("ggsci::default_nejm")), 1, 7))
 })
 
@@ -337,6 +339,7 @@ test_that("factorial F tests are exact (car's type III), not rounded", {
   model_data$supp <- factor(model_data$supp)
   model <- lm(len ~ dose * supp + age, model_data, contrasts = list(dose = contr.sum, supp = contr.sum))
   tests <- BetterGG:::.type3_tests(model)
+  skip_if_not_installed("car")
   ref <- car::Anova(model, type = 3)
   for (term in c("dose", "supp", "age", "dose:supp")) {
     expect_equal(tests$F.ratio[tests[["model term"]] == term], ref[term, "F value"], tolerance = 1e-10)

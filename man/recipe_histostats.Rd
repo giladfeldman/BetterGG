@@ -11,6 +11,7 @@ recipe_histostats(
   type = "parametric",
   stats = FALSE,
   test.value = 0,
+  alternative = "two.sided",
   conf.level = 0.95,
   bf.message = FALSE,
   tr = 0.2,
@@ -39,6 +40,9 @@ groups, the significant pairwise comparisons (default \code{FALSE}).}
 
 \item{test.value}{Value tested against when \code{stats = TRUE}.}
 
+\item{alternative}{Direction of the one-sample test (\code{"two.sided"},
+\code{"greater"}, \code{"less"}).}
+
 \item{conf.level}{Confidence level of intervals and effect sizes.}
 
 \item{bf.message}{Add the Bayes factor caption when \code{stats = TRUE} and
@@ -54,6 +58,8 @@ centre are then weighted; BetterGG itself has no weights).}
 
 \item{facet}{Optional name of a column splitting the histogram into
 panels, each with its own centre line.}
+
+\item{xlab, title}{Axis title and plot title.}
 
 \item{setup}{Include \code{\link[=recipe_setup]{recipe_setup()}} code so the result runs on its own.}
 }

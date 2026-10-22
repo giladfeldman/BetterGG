@@ -46,6 +46,8 @@ groups, the significant pairwise comparisons (default \code{FALSE}).}
 
 \item{conf.level}{Confidence level of intervals and effect sizes.}
 
+\item{xlab, title}{Axis title and plot title.}
+
 \item{legend.title}{Legend title.}
 
 \item{weights}{Optional name of a column of case weights: counts and

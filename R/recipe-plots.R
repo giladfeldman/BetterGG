@@ -7,10 +7,13 @@
 #' @inheritParams recipe_betweenrain
 #' @param x Name of the numeric column.
 #' @param test.value Value tested against when `stats = TRUE`.
+#' @param alternative Direction of the one-sample test (`"two.sided"`,
+#'   `"greater"`, `"less"`).
 #' @param binwidth Optional bin width; by default the code uses the
 #'   'ggstatsplot' rule (range / sqrt(n)).
 #' @param weights Optional name of a column of case weights (counts and the
 #'   centre are then weighted; BetterGG itself has no weights).
+#' @param xlab,title Axis title and plot title.
 #' @param facet Optional name of a column splitting the histogram into
 #'   panels, each with its own centre line.
 #' @return R code as one character string.
@@ -18,7 +21,8 @@
 #' cat(recipe_histostats("mtcars", "mpg"))
 #' @export
 recipe_histostats <- function(data, x, name = "plot", type = "parametric", stats = FALSE,
-                              test.value = 0, conf.level = 0.95, bf.message = FALSE, tr = 0.2,
+                              test.value = 0, alternative = "two.sided", conf.level = 0.95,
+                              bf.message = FALSE, tr = 0.2,
                               binwidth = NULL, weights = NULL, facet = NULL, xlab = x,
                               title = NULL, setup = TRUE) {
   .check_name1(data = data, x = x, weights = weights, facet = facet)
@@ -76,13 +80,13 @@ recipe_histostats <- function(data, x, name = "plot", type = "parametric", stats
   stats_code <- if (isTRUE(stats)) .fill(paste(
     "# Statistics (statsExpressions): one-sample test against {tv}; p-values in APA style.",
     "{name}_test <- statsExpressions::one_sample_test({name}_data, x = {X}, test.value = {tv}, type = {type},",
-    "  conf.level = {conf}, tr = {tr}, digits = 2L)",
+    "  alternative = {alt}, conf.level = {conf}, tr = {tr}, digits = 2L)",
     "{name}_subtitle <- figure_apa_p({name}_test$expression[[1]], {name}_test$p.value[[1]])",
     if (isTRUE(bf.message) && type == "parametric") paste(
       "{name}_caption <- statsExpressions::one_sample_test({name}_data, x = {X}, test.value = {tv},",
       "  type = \"bayes\", conf.level = {conf})$expression[[1]]", sep = "\n") else "{name}_caption <- NULL",
     sep = "\n"), name = name, X = v$X, tv = .num(test.value), type = .lit(type), conf = .num(conf.level),
-    tr = .num(tr)) else NULL
+    tr = .num(tr), alt = .lit(match.arg(alternative, c("two.sided", "greater", "less")))) else NULL
   weight_aes <- if (is.null(weights)) "" else paste0(", weight = ", .sym(weights))
   layers <- c(
     .fill("ggplot2::ggplot({name}_data, ggplot2::aes(x = {X}{w}))", name = name, X = v$X, w = weight_aes),
@@ -189,13 +193,22 @@ recipe_scatterstats <- function(data, x, y, name = "plot", type = "parametric", 
 #' @param vars Names of the numeric columns.
 #' @param type `"parametric"` (Pearson) or `"nonparametric"` (Spearman).
 #' @param sig.level Threshold for the crosses.
+#' @param title Plot title.
+#' @param method Overrides `type`: `"pearson"`, `"spearman"` or `"kendall"`.
+#' @param controls Optional names of columns to partial out (partial
+#'   correlations; not for Kendall).
+#' @param alternative Direction of the tests (`"two.sided"`, `"greater"`,
+#'   `"less"`).
+#' @param exact For Spearman and Kendall: `FALSE` (normal approximation, as
+#'   'ggcorrmat') or `NULL` (the default of [stats::cor.test()]: exact
+#'   p-values in small samples without ties).
 #' @return R code as one character string.
 #' @examples
 #' cat(recipe_corrmat("mtcars", c("mpg", "wt", "hp")))
 #' @export
 recipe_corrmat <- function(data, vars, name = "plot", type = "parametric", p.adjust.method = "holm",
                            sig.level = 0.05, conf.level = 0.95, method = NULL, controls = NULL,
-                           title = NULL, setup = TRUE) {
+                           alternative = "two.sided", exact = FALSE, title = NULL, setup = TRUE) {
   .check_names(vars = vars, controls = controls)
   .check_name1(data = data)
   .check_prefix(name)
@@ -258,7 +271,7 @@ recipe_corrmat <- function(data, vars, name = "plot", type = "parametric", p.adj
     "    panel.grid.minor = ggplot2::element_blank(), legend.title = ggplot2::element_text(size = 15)) +",
     "  ggplot2::coord_fixed()",
     sep = "\n"), name = name, data = data, vars = .vec(vars),
-    cell_body = .corr_cell_code(data, method, controls),
+    cell_body = .corr_cell_code(data, method, controls, match.arg(alternative, c("two.sided", "greater", "less")), exact),
     corr_word = if (length(controls)) "correlation (partial):" else "correlation:",
     partial_note = if (length(controls)) paste0(" controlling for ", paste(controls, collapse = ", ")) else "",
     method_word = switch(method, pearson = "Pearson's r", spearman = "Spearman's rho", kendall = "Kendall's tau-b"),
@@ -281,6 +294,7 @@ recipe_corrmat <- function(data, vars, name = "plot", type = "parametric", p.adj
 #'   cell instead of one row per case).
 #' @param paired Paired (McNemar) test when `stats = TRUE`.
 #' @param legend.title Legend title.
+#' @param xlab,title Axis title and plot title.
 #' @param weights Optional name of a column of case weights: counts and
 #'   percentages are weighted (no statistics; BetterGG itself has no weights).
 #' @param facet Optional name of a column splitting the bars into panels.
@@ -339,6 +353,7 @@ recipe_barstats <- function(data, x, y, name = "plot", counts = NULL, stats = FA
 #' @param max_labels Draw percentage labels only up to this many categories
 #'   (all categories stay in the legend).
 #' @param weights Optional name of a column of case weights (no statistics).
+#' @param title Plot title.
 #' @return R code as one character string.
 #' @examples
 #' cat(recipe_piestats("mtcars", "cyl"))
@@ -608,15 +623,17 @@ recipe_coefstats <- function(model, name = "plot", table = NULL, ci = c("t", "wa
 # correlated. With controls: the correlation of the residuals after
 # regressing both variables on the controls (ranks first for Spearman),
 # tested with n - 2 - k degrees of freedom, as for partial correlations.
-.corr_cell_code <- function(data, method, controls) {
+.corr_cell_code <- function(data, method, controls, alternative = "two.sided", exact = FALSE) {
   if (!length(controls)) {
     return(.fill(paste(
       "  complete <- stats::complete.cases({data}[, pair])",
       "  test <- tryCatch(suppressWarnings(stats::cor.test({data}[[pair[1]]][complete], {data}[[pair[2]]][complete],",
-      "    method = {method}{exact})), error = function(e) NULL)",
+      "    method = {method}{alt}{exact})), error = function(e) NULL)",
       "  if (is.null(test)) return(data.frame(Var1 = pair[1], Var2 = pair[2], r = NA_real_, p = NA_real_, n = sum(complete)))",
       "  data.frame(Var1 = pair[1], Var2 = pair[2], r = unname(test$estimate), p = test$p.value, n = sum(complete))",
-      sep = "\n"), data = data, method = .lit(method), exact = if (method != "pearson") ", exact = FALSE" else ""))
+      sep = "\n"), data = data, method = .lit(method),
+      alt = if (alternative != "two.sided") paste0(", alternative = ", .lit(alternative)) else "",
+      exact = if (method != "pearson" && isFALSE(exact)) ", exact = FALSE" else ""))
   }
   .fill(paste(
     c("  columns <- c(pair, {controls})",
@@ -628,6 +645,8 @@ recipe_coefstats <- function(model, name = "plot", table = NULL, ci = c("t", "wa
       "  r <- stats::cor(residual(pair[1]), residual(pair[2]))",
       "  df <- nrow(part) - 2L - {k}",
       "  t <- r * sqrt(df / (1 - r^2))",
-      "  data.frame(Var1 = pair[1], Var2 = pair[2], r = r, p = 2 * stats::pt(-abs(t), df), n = nrow(part))"),
+      paste0("  data.frame(Var1 = pair[1], Var2 = pair[2], r = r, p = ", switch(alternative,
+        two.sided = "2 * stats::pt(-abs(t), df)", greater = "stats::pt(t, df, lower.tail = FALSE)",
+        less = "stats::pt(t, df)"), ", n = nrow(part))")),
     collapse = "\n"), data = data, controls = .vec(controls), k = paste0(length(controls), "L"))
 }

@@ -47,6 +47,8 @@ groups, the significant pairwise comparisons (default \code{FALSE}).}
 
 \item{legend.title}{Legend title.}
 
+\item{title}{Plot title.}
+
 \item{max_labels}{Draw percentage labels only up to this many categories
 (all categories stay in the legend).}
 

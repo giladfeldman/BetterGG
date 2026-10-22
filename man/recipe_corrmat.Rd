@@ -14,6 +14,8 @@ recipe_corrmat(
   conf.level = 0.95,
   method = NULL,
   controls = NULL,
+  alternative = "two.sided",
+  exact = FALSE,
   title = NULL,
   setup = TRUE
 )
@@ -33,6 +35,20 @@ recipe_corrmat(
 \item{sig.level}{Threshold for the crosses.}
 
 \item{conf.level}{Confidence level of intervals and effect sizes.}
+
+\item{method}{Overrides \code{type}: \code{"pearson"}, \code{"spearman"} or \code{"kendall"}.}
+
+\item{controls}{Optional names of columns to partial out (partial
+correlations; not for Kendall).}
+
+\item{alternative}{Direction of the tests (\code{"two.sided"}, \code{"greater"},
+\code{"less"}).}
+
+\item{exact}{For Spearman and Kendall: \code{FALSE} (normal approximation, as
+'ggcorrmat') or \code{NULL} (the default of \code{\link[stats:cor.test]{stats::cor.test()}}: exact
+p-values in small samples without ties).}
+
+\item{title}{Plot title.}
 
 \item{setup}{Include \code{\link[=recipe_setup]{recipe_setup()}} code so the result runs on its own.}
 }

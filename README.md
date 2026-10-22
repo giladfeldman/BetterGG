@@ -79,15 +79,41 @@ save_figure(plot, "figure1.png", width = "single", dpi = 600)   # 3.5 in raster
 save_figure(plot, "figure1.tiff", width = "onehalf", family = "Arial")
 ```
 
+## Code recipes
+
+Each BetterGG plot has a recipe that writes the same figure as plain, readable
+ggplot2 code, which runs without BetterGG. Recipes never look at your data: give
+them the names of the data frame and its columns.
+
+```r
+code <- recipe_betweenrain("mtcars", "cyl", "mpg", name = "mpg_by_cyl")
+cat(code)          # paste into a script or an R Markdown chunk
+```
+
+Recipes exist for `ggbetweenrain()`, `ggwithinrain()`, `ggfactorialrain()`,
+`gghistostats()`, `ggscatterstats()`, `ggcorrmat()`, `ggbarstats()`,
+`ggpiestats()`, `ggcoefstats()` and `ggreliability()`; `recipe_setup()` writes the
+shared style (font, palette, APA theme). Statistics are off by default; with
+`stats = TRUE` they are recomputed with 'statsExpressions' in the code. The
+tests run every recipe on data and compare its layers, values, colours and labels
+with the real BetterGG plot.
+
+## Factorial designs and reliability
+
+`ggfactorialrain()` shows two or three factors (x axis, colour, panels) and
+covariates: every observation, its distribution, and the estimated marginal
+means with confidence intervals of the full factorial model (sum-to-zero
+contrasts; `stats = TRUE` adds the type III F tests). `ggreliability()` shows the
+responses to each item and each item's correlation with the other items, with
+Cronbach's alpha and jamovi's reverse scoring.
+
 ## Install
 
-Requires R >= 4.5 and ggstatsplot >= 1.1.3. This is the prepared 0.1.0 release
-candidate. The GitHub command becomes available once the public release is
-published:
+Requires R >= 4.5 and ggstatsplot >= 1.1.2.
 
 ```r
 install.packages("remotes")
-remotes::install_github("giladfeldman/BetterGG@v0.1.0", upgrade = "never")
+remotes::install_github("giladfeldman/BetterGG@v0.2.0", upgrade = "never")
 ```
 
 To install a downloaded source checkout:
@@ -96,11 +122,13 @@ To install a downloaded source checkout:
 install.packages(".", repos = NULL, type = "source")
 ```
 
-## Included in 0.1.0
+## Included
 
 1. APA p-values from exact computed values
 2. Between- and within-subject raincloud plots
 3. Publication colour palettes, fonts, and figure export
+4. Code recipes for every plot (0.2.0)
+5. Factorial-design and reliability plots (0.2.0)
 
 ## Reproducibility and validation
 
@@ -113,8 +141,10 @@ random seeds.
 The test suite checks exact-value APA formatting, statistical identity under
 matching seeds, argument forwarding, raincloud geometry, palettes, fonts, and
 exports. Run `Rscript tools/check.R` followed by `R CMD build .` and
-`R CMD check --no-manual BetterGG_0.1.0.tar.gz` in native R. Browser/WebR support
-is not claimed by this release.
+`R CMD check --no-manual BetterGG_0.2.0.tar.gz` in native R. In WebR the
+recipes and the plots work (they are used by the jmv2gg web app), except
+ggstatsplot's parametric and nonparametric pairwise tests: their PMCMRplus
+dependency needs Rmpfr, which WebR does not have.
 
 ## Known limitations
 

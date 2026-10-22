@@ -26,6 +26,8 @@ recipe_reliability(
 
 \item{stats}{Show Cronbach's alpha as the subtitle.}
 
+\item{title}{Plot title.}
+
 \item{setup}{Include \code{\link[=recipe_setup]{recipe_setup()}} code so the result runs on its own.}
 }
 \value{

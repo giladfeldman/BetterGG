@@ -98,6 +98,7 @@ ggreliability <- function(data, items, reverse = NULL, stats = FALSE, title = NU
 #' @param items Names of the item columns.
 #' @param reverse Optional names of reverse-scored items.
 #' @param stats Show Cronbach's alpha as the subtitle.
+#' @param title Plot title.
 #' @return R code as one character string.
 #' @examples
 #' cat(recipe_reliability("survey", c("q1", "q2", "q3")))

@@ -22,6 +22,7 @@ Imports:
     paletteer,
     beeswarm,
     dplyr,
+    emmeans,
     ggdist,
     rlang,
     viridisLite,
@@ -31,6 +32,12 @@ Imports:
     utils,
     patchwork
 Suggests:
+    car,
+    ggrepel,
+    ggside,
+    ggsignif,
+    psych,
+    statsExpressions,
     testthat (>= 3.0.0),
     withr
 Config/testthat/edition: 3

@@ -135,6 +135,9 @@ apa_p <- function(plot, digits = 3L) {
   state$ok <- TRUE
   out <- .walk(expr, raw, digits, state)
   if (is.null(state$shown)) {
+    # A significance threshold ("X = non-significant at p < 0.05", the
+    # ggcorrmat caption) states no result, so there is nothing to rewrite.
+    if (.is_threshold(expr)) return(x)
     warning(
       "BetterGG: the ", where, " mentions p but not in the form italic(p) == \"value\"; ",
       "left unchanged.",
@@ -151,6 +154,11 @@ apa_p <- function(plot, digits = 3L) {
     return(x)
   }
   if (was_char) paste(deparse(out, width.cutoff = 500L), collapse = "") else out
+}
+
+.is_threshold <- function(expr) {
+  s <- paste(deparse(expr, width.cutoff = 500L), collapse = "")
+  grepl("italic(p)", s, fixed = TRUE) && grepl("\"< \"", s, fixed = TRUE) && !grepl("==", s, fixed = TRUE)
 }
 
 .is_p_symbol <- function(lhs) {

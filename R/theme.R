@@ -75,6 +75,13 @@ bgg_font <- function() {
     names(spec) <- family
     do.call(grDevices::postscriptFonts, spec)
   }
+  # The Windows screen and png() devices (knitr's default on Windows) look
+  # fonts up in their own table: register the family under its own name.
+  if (.Platform$OS.type == "windows" && !family %in% names(grDevices::windowsFonts())) {
+    spec <- list(grDevices::windowsFont(family))
+    names(spec) <- family
+    do.call(grDevices::windowsFonts, spec)
+  }
   invisible(family)
 }
 
@@ -105,7 +112,8 @@ bgg_palette <- function(name = c("nejm", "grey", "okabe_ito", "viridis"), n,
   name <- match.arg(name)
   type <- match.arg(type)
   cols <- switch(name,
-    nejm = substr(as.character(paletteer::paletteer_d("ggsci::default_nejm")), 1, 7),
+    # the ggsci "default_nejm" palette (as paletteer::paletteer_d() returns it)
+    nejm = c("#BC3C29", "#0072B5", "#E18727", "#20854E", "#7876B1", "#6F99AD", "#FFDC91", "#EE4C97"),
     grey = if (type == "colour") {
       c("#000000", "#555555", "#8C8C8C", "#2B2B2B", "#707070", "#A8A8A8")
     } else {

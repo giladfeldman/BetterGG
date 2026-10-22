@@ -104,10 +104,16 @@
   )
 }
 
-# Same abbreviations as ggstatsplot (p, np, r, bf).
+# The rule of statsExpressions::extract_stats_type(), which ggstatsplot uses:
+# by the first letter, case-sensitive ("np" and "nonparametric" are
+# nonparametric; anything not starting with n, r or b is parametric, so
+# "Non-parametric" is parametric there too).
 .stats_type <- function(type) {
-  type <- match.arg(type, c("parametric", "nonparametric", "robust", "bayes", "p", "np", "r", "bf"))
-  switch(type, p = "parametric", np = "nonparametric", r = "robust", bf = "bayes", type)
+  if (!is.character(type) || length(type) != 1L || is.na(type)) {
+    stop("BetterGG recipe: 'type' must be one string.", call. = FALSE)
+  }
+  if (grepl("^n", type)) "nonparametric" else if (grepl("^r", type)) "robust" else
+    if (grepl("^b", type)) "bayes" else "parametric"
 }
 
 # Code computing one centrality value from a numeric vector named `values`.

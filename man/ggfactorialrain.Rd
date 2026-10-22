@@ -34,8 +34,8 @@ ggfactorialrain(
 
 \item{conf.level}{Confidence level of the intervals.}
 
-\item{stats}{Show the model's F tests (type III, via
-\code{emmeans::joint_tests()}) as the subtitle (default \code{FALSE}).}
+\item{stats}{Show the model's type III F tests (each term dropped from
+the sum-to-zero model, \code{\link[stats:drop1]{stats::drop1()}}) as the subtitle (default \code{FALSE}).}
 
 \item{xlab, ylab, title, legend.title}{Labels.}
 }

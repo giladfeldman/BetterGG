@@ -13,6 +13,7 @@ recipe_coefstats(
   exponentiate = FALSE,
   intercept = TRUE,
   stats = FALSE,
+  readable_terms = FALSE,
   xlab = NULL,
   ylab = "term",
   title = NULL,
@@ -44,6 +45,9 @@ logistic model) on a log axis.}
 
 \item{stats}{Label each coefficient with its estimate, test statistic and
 p-value, and show AIC/BIC as the caption.}
+
+\item{readable_terms}{Label factor coefficients as "factor: level vs
+reference" instead of the coefficient name (e.g. "framingloss").}
 
 \item{xlab, ylab, title}{Axis titles and plot title.}
 

@@ -43,8 +43,8 @@ with 'emmeans'.}
 \item{model}{With \code{means} and \code{stats = TRUE}: name of the fitted model
 whose F tests form the subtitle.}
 
-\item{stats}{Show the F tests of the factor terms (type III, via
-\code{emmeans::joint_tests()}) as the subtitle.}
+\item{stats}{Show the type III F test of every model term (\code{\link[stats:drop1]{stats::drop1()}}
+on the sum-to-zero model) as the subtitle.}
 
 \item{conf.level}{Confidence level of intervals and effect sizes.}
 

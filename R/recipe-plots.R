@@ -496,6 +496,8 @@ recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, sta
 #' @param exponentiate Show exponentiated coefficients (odds ratios for a
 #'   logistic model) on a log axis.
 #' @param intercept Include the intercept.
+#' @param readable_terms Label factor coefficients as "factor: level vs
+#'   reference" instead of the coefficient name (e.g. "framingloss").
 #' @param stats Label each coefficient with its estimate, test statistic and
 #'   p-value, and show AIC/BIC as the caption.
 #' @return R code as one character string.
@@ -504,7 +506,7 @@ recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, sta
 #' @export
 recipe_coefstats <- function(model, name = "plot", table = NULL, ci = c("t", "wald", "profile"),
                              conf.level = 0.95, exponentiate = FALSE, intercept = TRUE, stats = FALSE,
-                             xlab = NULL, ylab = "term", title = NULL, setup = TRUE) {
+                             readable_terms = FALSE, xlab = NULL, ylab = "term", title = NULL, setup = TRUE) {
   .check_name1(model = model, table = table)
   .check_prefix(name)
   .check_conf(conf.level)
@@ -546,6 +548,17 @@ recipe_coefstats <- function(model, name = "plot", table = NULL, ci = c("t", "wa
       "# Odds ratios: exponentiated estimates and interval limits.",
       "{name}_table[c(\"estimate\", \"conf.low\", \"conf.high\")] <- exp({name}_table[c(\"estimate\", \"conf.low\", \"conf.high\")])",
       sep = "\n"), name = name))
+  }
+  if (isTRUE(readable_terms) && is.null(table)) {
+    prep <- .code(prep, .fill(paste(
+      "# Readable names for factor coefficients, e.g. \"framing: loss vs gain\".",
+      "for (factor_name in names({model}$xlevels)) {",
+      "  levels <- {model}$xlevels[[factor_name]]",
+      "  coded <- {name}_table$term %in% paste0(factor_name, levels[-1])",
+      "  {name}_table$term[coded] <- paste0(factor_name, \": \", substring({name}_table$term[coded], nchar(factor_name) + 1L),",
+      "    \" vs \", levels[1])",
+      "}",
+      sep = "\n"), name = name, model = model))
   }
   prep <- .code(prep, .fill(paste(
     "# Terms listed top to bottom in model order.",

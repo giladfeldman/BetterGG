@@ -353,3 +353,11 @@ test_that("ggfactorialrain accepts column names computed at run time, NULL meani
   expect_identical(plot$labels$x, "dose")
   expect_false(any(vapply(plot$layers, function(l) inherits(l$geom, "GeomLine"), logical(1))))
 })
+
+test_that("readable factor terms name the level and its reference", {
+  model <- lm(mpg ~ wt + am, data = transform(mtcars, am = factor(am, labels = c("auto", "manual"))))
+  env <- run_recipe(recipe_coefstats("model", name = "r", readable_terms = TRUE, intercept = FALSE), model = model)
+  expect_setequal(as.character(env$r_table$term), c("wt", "am: manual vs auto"))
+  env <- run_recipe(recipe_coefstats("model", name = "r", intercept = FALSE), model = model)
+  expect_setequal(as.character(env$r_table$term), c("wt", "ammanual"))
+})

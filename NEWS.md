@@ -7,6 +7,14 @@
   be computed from these data." Inf is kept, since a one-sided confidence interval ends at Inf. The
   check is `figure_statistics()`, written by `recipe_setup(stats = TRUE)`; every recipe's subtitle
   goes through it, and `recipe_factorialrain()` now writes the statistics helpers in its setup too.
+- `recipe_barstats()` and `recipe_piestats()` take `cramers_v = "uncorrected"` to print Cramer's V
+  as jamovi and SPSS report it, `sqrt(chi^2 / (n * (k - 1)))` from the same test and without an
+  interval. The default, `"bias-corrected"`, is unchanged and matches `ggbarstats()`, which prints
+  the bias-corrected V (statsExpressions uses `effectsize::cramers_v(adjust = TRUE)`); on small
+  tables the two differ noticeably (for example .00 corrected against .16 uncorrected).
+- Bayesian rainclouds (`type = "bayes"`) no longer warn "Unknown or uninitialised column:
+  `p.value`" (a Bayesian test has no p-value). With three or more groups the pairwise note says
+  no bars are drawn for Bayes factors, instead of naming a significance level.
 
 # BetterGG 0.2.0
 

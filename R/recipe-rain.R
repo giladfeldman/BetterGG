@@ -167,7 +167,8 @@ recipe_betweenrain <- function(data, x, y, name = "plot", type = "parametric", s
     "# the direction of the test applies to two groups only",
     "if ({name}_k < 3L) {name}_test_args$alternative <- {alt}",
     "{name}_test <- do.call({name}_test_fun, {name}_test_args)",
-    "{name}_subtitle <- figure_apa_p({name}_test$expression[[1]], {name}_test$p.value[[1]])",
+    "# A Bayesian test has no p-value; its label is shown as statsExpressions writes it.",
+    "{name}_subtitle <- figure_apa_p({name}_test$expression[[1]], {name}_test[[\"p.value\"]][[1]])",
     if (bayes_caption) paste(
       "{name}_caption <- {name}_test_fun({name}_data, x = {X}, y = {Y}{subj}, paired = {paired},",
       "  type = \"bayes\", conf.level = {conf})$expression[[1]]", sep = "\n")
@@ -180,8 +181,9 @@ recipe_betweenrain <- function(data, x, y, name = "plot", type = "parametric", s
     "    type = {type}, paired = {paired}, var.equal = {veq}, tr = {tr}, p.adjust.method = {padj}, digits = 2L)",
     "  {name}_pairwise_note <- parse(text = paste0(\"list('Pairwise test:'~bold('\",",
     "    sub(\"'\", \"\\\\'\", unique({name}_pairs$test), fixed = TRUE),",
-    "    \"'), 'Bars shown:'~bold('significant'), alpha == 0.05)\"))",
-    "  {name}_shown <- {name}_pairs[{name}_pairs$p.value < 0.05, , drop = FALSE]",
+    "    if (is.null({name}_pairs[[\"p.value\"]])) \"'), 'Bars shown:'~bold('none (Bayes factors)'))\" else",
+    "      \"'), 'Bars shown:'~bold('significant'), alpha == 0.05)\"))",
+    "  {name}_shown <- {name}_pairs[which({name}_pairs[[\"p.value\"]] < 0.05), , drop = FALSE]",
     "  {name}_shown <- {name}_shown[order({name}_shown$group1, {name}_shown$group2, method = \"radix\"), , drop = FALSE]",
     "  if (nrow({name}_shown)) {",
     "    {name}_y_range <- diff(range({name}_data[[{ys}]]))",

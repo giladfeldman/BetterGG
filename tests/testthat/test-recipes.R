@@ -402,3 +402,34 @@ test_that("a statistic that cannot be computed is labelled, never drawn as NA", 
   code <- recipe_factorialrain(data = "d", x = "a", y = "y", colour = "b", name = "f", stats = TRUE)
   expect_match(code, "subtitle = figure_statistics(f_subtitle)", fixed = TRUE)
 })
+
+test_that("the uncorrected Cramer's V option prints V as jamovi computes it", {
+  skip_if_not_installed("statsExpressions")
+  set.seed(4)
+  d <- data.frame(a = factor(sample(c("p", "q", "r"), 90, TRUE)), b = factor(sample(c("u", "v", "w", "z"), 90, TRUE)))
+  chi <- unname(suppressWarnings(stats::chisq.test(table(d$a, d$b), correct = FALSE))$statistic)
+  expected <- sqrt(chi / (90 * (3 - 1)))
+  for (fn in list(recipe_barstats, recipe_piestats)) {
+    e <- new.env(); assign("d", d, e)
+    eval(parse(text = fn("d", "a", "b", stats = TRUE, cramers_v = "uncorrected")), e)
+    expect_equal(unname(e$plot_v), expected)
+    label <- gsub("[[:space:]]+", " ", paste(deparse(e$plot_subtitle), collapse = " "))
+    expect_match(label, formatC(expected, format = "f", digits = 2), fixed = TRUE)
+    expect_match(label, "italic(p) == \".144\"", fixed = TRUE)
+    expect_false(grepl("widehat|CI", label))
+  }
+  # The default stays ggbarstats()'s bias-corrected V with its interval.
+  e <- new.env(); assign("d", d, e)
+  eval(parse(text = recipe_barstats("d", "a", "b", stats = TRUE)), e)
+  expect_match(paste(deparse(e$plot_subtitle), collapse = " "), "widehat", fixed = TRUE)
+  expect_error(recipe_barstats("d", "a", "b", cramers_v = "adjusted"))
+})
+
+test_that("a Bayesian raincloud has no p-value and draws without a warning", {
+  skip_if_not_installed("statsExpressions"); skip_if_not_installed("BayesFactor")
+  set.seed(5)
+  d <- data.frame(g = factor(rep(c("a", "b"), 30)), y = rnorm(60) + rep(c(0, 0.8), 30))
+  e <- new.env(); assign("d", d, e)
+  expect_no_warning(eval(parse(text = recipe_betweenrain("d", "g", "y", stats = TRUE, type = "bayes")), e))
+  expect_match(paste(deparse(e$plot_subtitle), collapse = " "), "BF", fixed = TRUE)
+})

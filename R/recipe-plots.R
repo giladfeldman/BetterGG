@@ -298,19 +298,27 @@ recipe_corrmat <- function(data, vars, name = "plot", type = "parametric", p.adj
 #' @param weights Optional name of a column of case weights: counts and
 #'   percentages are weighted (no statistics; BetterGG itself has no weights).
 #' @param facet Optional name of a column splitting the bars into panels.
+#' @param cramers_v With `stats = TRUE` and an unpaired parametric test of
+#'   association: `"bias-corrected"` (the default, as [ggbarstats()] prints it,
+#'   with its confidence interval) or `"uncorrected"`, Cramer's V as jamovi and
+#'   SPSS report it, `sqrt(chi^2 / (n * (k - 1)))` from the same test, without
+#'   an interval.
 #' @return R code as one character string.
 #' @examples
 #' cat(recipe_barstats("mtcars", "am", "cyl"))
 #' @export
 recipe_barstats <- function(data, x, y, name = "plot", counts = NULL, stats = FALSE, type = "parametric",
                             paired = FALSE, conf.level = 0.95, xlab = y, legend.title = x,
-                            title = NULL, weights = NULL, facet = NULL, setup = TRUE) {
+                            title = NULL, weights = NULL, facet = NULL, setup = TRUE,
+                            cramers_v = c("bias-corrected", "uncorrected")) {
+  cramers_v <- match.arg(cramers_v)
   .check_name1(data = data, x = x, y = y, counts = counts, weights = weights, facet = facet)
   .check_prefix(name)
   type <- .stats_type(type)
   .check_categorical_stats(stats, weights, facet, counts)
   prep <- .categorical_prep(data, x, y, counts, name, weights = weights, facet = facet)
-  stats_code <- if (isTRUE(stats)) .categorical_stats(name, x, y, type, paired, conf.level, two_way = TRUE) else NULL
+  stats_code <- if (isTRUE(stats)) .categorical_stats(name, x, y, type, paired, conf.level, two_way = TRUE,
+    uncorrected_v = cramers_v == "uncorrected") else NULL
   layers <- c(
     .fill("ggplot2::ggplot({name}_cells, ggplot2::aes(x = {Y}, y = perc, fill = {X}))", name = name, X = .sym(x), Y = .sym(y)),
     "  # 100% stacked bars",
@@ -360,13 +368,16 @@ recipe_barstats <- function(data, x, y, name = "plot", counts = NULL, stats = FA
 #' @export
 recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, stats = FALSE,
                             type = "parametric", paired = FALSE, conf.level = 0.95,
-                            legend.title = x, title = NULL, max_labels = Inf, weights = NULL, setup = TRUE) {
+                            legend.title = x, title = NULL, max_labels = Inf, weights = NULL, setup = TRUE,
+                            cramers_v = c("bias-corrected", "uncorrected")) {
+  cramers_v <- match.arg(cramers_v)
   .check_name1(data = data, x = x, y = y, counts = counts, weights = weights)
   .check_prefix(name)
   type <- .stats_type(type)
   .check_categorical_stats(stats, weights, NULL, counts)
   prep <- .categorical_prep(data, x, y, counts, name, weights = weights)
-  stats_code <- if (isTRUE(stats)) .categorical_stats(name, x, y, type, paired, conf.level, two_way = !is.null(y)) else NULL
+  stats_code <- if (isTRUE(stats)) .categorical_stats(name, x, y, type, paired, conf.level, two_way = !is.null(y),
+    uncorrected_v = cramers_v == "uncorrected") else NULL
   label_layer <- .fill(paste0("ggplot2::geom_label(ggplot2::aes(label = label, group = {X}), position = ggplot2::position_fill(vjust = 0.5),\n",
     "    fill = \"white\", alpha = 1, na.rm = TRUE, show.legend = FALSE, family = figure_font)"), X = .sym(x))
   layers <- c(
@@ -456,7 +467,7 @@ recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, sta
     sep = "\n"), name = name, xs = v$xs))
 }
 
-.categorical_stats <- function(name, x, y, type, paired, conf.level, two_way) {
+.categorical_stats <- function(name, x, y, type, paired, conf.level, two_way, uncorrected_v = FALSE) {
   v <- list(name = name, X = .sym(x), Y = if (is.null(y)) "NULL" else .sym(y), xs = .lit(x),
     ys = if (is.null(y)) "" else .lit(y), type = .lit(type), paired = .num(isTRUE(paired)),
     conf = .num(conf.level))
@@ -467,6 +478,22 @@ recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, sta
     "{name}_subtitle <- figure_apa_p({name}_test$expression[[1]], {name}_test$p.value[[1]])",
     sep = "\n")), c(v, what = if (two_way) "test of association" else "goodness of fit",
     y_arg = if (two_way) paste0(", y = ", v$Y) else "")))
+  if (two_way && !isTRUE(paired) && isTRUE(uncorrected_v) && identical(type, "parametric")) {
+    code <- .code(code, do.call(.fill, c(list(paste(
+      "# Cramer's V as jamovi reports it, without the bias correction statsExpressions applies:",
+      "# sqrt(chi-squared / (n * (k - 1))) from the same test, k the smaller number of categories",
+      "# (jamovi gives no interval for it).",
+      "{name}_k <- min(dim(table(droplevels(factor({name}_data[[{xs}]])), droplevels(factor({name}_data[[{ys}]])))))",
+      "{name}_v <- sqrt({name}_test$statistic[[1]] / ({name}_test$n.obs[[1]] * ({name}_k - 1)))",
+      "{name}_subtitle <- figure_apa_p(substitute(",
+      "  list(chi[\"Pearson\"]^2 * \"(\" * df * \")\" == chi2, italic(p) == p_value, italic(\"V\")[\"Cramer\"] == v, italic(\"n\")[\"obs\"] == n),",
+      "  list(df = {name}_test$df[[1]], chi2 = formatC({name}_test$statistic[[1]], format = \"f\", digits = 2),",
+      "    p_value = formatC({name}_test$p.value[[1]], format = \"f\", digits = 3),",
+      "    v = formatC({name}_v, format = \"f\", digits = 2),",
+      "    n = prettyNum({name}_test$n.obs[[1]], big.mark = \",\"))), {name}_test$p.value[[1]])",
+      sep = "
+")), v)))
+  }
   if (two_way) {
     code <- .code(code, do.call(.fill, c(list(paste(
       "# Goodness-of-fit test of the categories within each bar",

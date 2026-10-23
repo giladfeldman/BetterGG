@@ -19,7 +19,8 @@ recipe_barstats(
   title = NULL,
   weights = NULL,
   facet = NULL,
-  setup = TRUE
+  setup = TRUE,
+  cramers_v = c("bias-corrected", "uncorrected")
 )
 }
 \arguments{
@@ -56,6 +57,12 @@ percentages are weighted (no statistics; BetterGG itself has no weights).}
 \item{facet}{Optional name of a column splitting the bars into panels.}
 
 \item{setup}{Include \code{\link[=recipe_setup]{recipe_setup()}} code so the result runs on its own.}
+
+\item{cramers_v}{With \code{stats = TRUE} and an unpaired parametric test of
+association: \code{"bias-corrected"} (the default, as \code{\link[=ggbarstats]{ggbarstats()}} prints it,
+with its confidence interval) or \code{"uncorrected"}, Cramer's V as jamovi and
+SPSS report it, \code{sqrt(chi^2 / (n * (k - 1)))} from the same test, without
+an interval.}
 }
 \value{
 R code as one character string.

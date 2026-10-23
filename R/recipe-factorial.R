@@ -153,7 +153,7 @@ recipe_factorialrain <- function(data, x, y, colour = NULL, facet = NULL, covari
     "  ggplot2::scale_fill_manual(values = figure_fills)",
     .fill("  ggplot2::labs(x = {xlab}, y = {ylab}, title = {title}, colour = {lt}, fill = {lt}, subtitle = {sub})",
       xlab = .lit(xlab), ylab = .lit(ylab), title = if (is.null(title)) "NULL" else .lit(title),
-      lt = .lit(legend.title %||% group), sub = if (isTRUE(stats)) paste0(name, "_subtitle") else "NULL"),
+      lt = .lit(legend.title %||% group), sub = if (isTRUE(stats)) paste0("figure_statistics(", name, "_subtitle)") else "NULL"),
     "  theme_figure()",
     .fill("  ggplot2::theme(legend.position = {pos}, panel.grid.major.x = ggplot2::element_blank())",
       pos = if (is.null(colour)) "\"none\"" else "\"bottom\""),
@@ -161,5 +161,5 @@ recipe_factorialrain <- function(data, x, y, colour = NULL, facet = NULL, covari
   )
   plot <- .join_layers(paste0(name, "_plot"), layers)
   code <- .code(prep, "", stats_code, if (!is.null(stats_code)) "", "# 4. The figure", plot)
-  .with_setup(code, setup, FALSE)
+  .with_setup(code, setup, stats)
 }

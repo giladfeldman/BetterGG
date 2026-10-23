@@ -113,7 +113,7 @@ Requires R >= 4.5 and ggstatsplot >= 1.1.2.
 
 ```r
 install.packages("remotes")
-remotes::install_github("giladfeldman/BetterGG@v0.2.0", upgrade = "never")
+remotes::install_github("giladfeldman/BetterGG@v0.2.1", upgrade = "never")
 ```
 
 To install a downloaded source checkout:
@@ -141,7 +141,7 @@ random seeds.
 The test suite checks exact-value APA formatting, statistical identity under
 matching seeds, argument forwarding, raincloud geometry, palettes, fonts, and
 exports. Run `Rscript tools/check.R` followed by `R CMD build .` and
-`R CMD check --no-manual BetterGG_0.2.0.tar.gz` in native R. In WebR the
+`R CMD check --no-manual BetterGG_0.2.1.tar.gz` in native R. In WebR the
 recipes and the plots work (they are used by the jmv2gg web app), except
 ggstatsplot's parametric and nonparametric pairwise tests: their PMCMRplus
 dependency needs Rmpfr, which WebR does not have.

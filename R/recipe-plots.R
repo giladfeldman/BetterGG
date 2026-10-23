@@ -112,7 +112,7 @@ recipe_histostats <- function(data, x, name = "plot", type = "parametric", stats
     ),
     .fill("  ggplot2::labs(x = {xlab}, y = \"count\", title = {title}, subtitle = {sub}, caption = {cap})",
       xlab = .lit(xlab), title = if (is.null(title)) "NULL" else .lit(title),
-      sub = if (isTRUE(stats)) paste0(name, "_subtitle") else "NULL",
+      sub = if (isTRUE(stats)) paste0("figure_statistics(", name, "_subtitle)") else "NULL",
       cap = if (isTRUE(stats)) paste0(name, "_caption") else "NULL"),
     "  theme_figure()"
   )
@@ -165,7 +165,7 @@ recipe_scatterstats <- function(data, x, y, name = "plot", type = "parametric", 
       "    colour = \"blue\", na.rm = TRUE)"), conf = v$conf),
     .fill("  ggplot2::labs(x = {xlab}, y = {ylab}, title = {title}, subtitle = {sub}, caption = {cap})",
       xlab = .lit(xlab), ylab = .lit(ylab), title = if (is.null(title)) "NULL" else .lit(title),
-      sub = if (isTRUE(stats)) paste0(name, "_subtitle") else "NULL",
+      sub = if (isTRUE(stats)) paste0("figure_statistics(", name, "_subtitle)") else "NULL",
       cap = if (isTRUE(stats)) paste0(name, "_caption") else "NULL"),
     "  theme_figure()",
     if (isTRUE(marginal)) c(
@@ -335,7 +335,7 @@ recipe_barstats <- function(data, x, y, name = "plot", counts = NULL, stats = FA
       "    size = 4, family = figure_font)"), name = name, Y = .sym(y)),
     .fill("  ggplot2::labs(x = {xlab}, y = NULL, subtitle = {sub}, title = {title}, caption = NULL)",
       xlab = .lit(xlab), title = if (is.null(title)) "NULL" else .lit(title),
-      sub = if (isTRUE(stats)) paste0(name, "_subtitle") else "NULL")
+      sub = if (isTRUE(stats)) paste0("figure_statistics(", name, "_subtitle)") else "NULL")
   )
   code <- .code(prep, "", stats_code, if (!is.null(stats_code)) "", "# 3. The figure",
     .join_layers(paste0(name, "_plot"), layers))
@@ -387,7 +387,7 @@ recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, sta
       "    position = ggplot2::position_fill(vjust = 1), size = 2.8, parse = TRUE)"), name = name),
     .fill("  ggplot2::labs(x = NULL, y = NULL, subtitle = {sub}, title = {title}, caption = NULL)",
       title = if (is.null(title)) "NULL" else .lit(title),
-      sub = if (isTRUE(stats)) paste0(name, "_subtitle") else "NULL"),
+      sub = if (isTRUE(stats)) paste0("figure_statistics(", name, "_subtitle)") else "NULL"),
     .fill("  ggplot2::guides(fill = ggplot2::guide_legend(title = {lt}))", lt = .lit(legend.title))
   )
   code <- .code(prep, "", stats_code, if (!is.null(stats_code)) "", "# 3. The figure",

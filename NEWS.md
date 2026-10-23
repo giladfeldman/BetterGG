@@ -1,3 +1,13 @@
+# BetterGG 0.2.1
+
+- Recipe figures with `stats = TRUE` never print a statistic as NA. When a test cannot be computed
+  from the data (an empty cell of the design, a term confounded with another, a variable with no
+  variation), its line reads "not estimable from these data" and a warning names the terms; a
+  statsExpressions label that contains NA is replaced by "Statistics not shown: the test could not
+  be computed from these data." Inf is kept, since a one-sided confidence interval ends at Inf. The
+  check is `figure_statistics()`, written by `recipe_setup(stats = TRUE)`; every recipe's subtitle
+  goes through it, and `recipe_factorialrain()` now writes the statistics helpers in its setup too.
+
 # BetterGG 0.2.0
 
 - Code recipes: `recipe_betweenrain()`, `recipe_withinrain()`, `recipe_factorialrain()`,

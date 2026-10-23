@@ -379,3 +379,26 @@ test_that("long facet titles wrap instead of being clipped at the panel edge", {
     expect_match(code, "labeller = ggplot2::label_wrap_gen(width = 30)", fixed = TRUE)
   }
 })
+
+test_that("a statistic that cannot be computed is labelled, never drawn as NA", {
+  env <- run_recipe(recipe_setup(stats = TRUE))
+  fs <- env$figure_statistics
+  ok <- "a: F(1, 96) = 0.72, p = .400\nb: F(1, 96) = 0.03, p = .866"
+  expect_identical(fs(ok), ok)
+  expect_warning(out <- fs("a: F(0, 98) =  NA, p NA\nb: F(1, 98) = 2.00, p = .160"), "not estimable from these data.*: a$")
+  expect_identical(out, "a: not estimable from these data\nb: F(1, 98) = 2.00, p = .160")
+  expect_warning(out <- fs("t(98) = NaN"), "The test")
+  expect_identical(out, "The test: not estimable from these data")
+  # statsExpressions labels are language objects.
+  expect_identical(fs(quote(list(italic(t) == "1.20"))), quote(list(italic(t) == "1.20")))
+  expect_warning(out <- fs(quote(list(italic(t) == "NA"))), "could not be computed")
+  expect_match(out, "^Statistics not shown")
+  # A one-sided test's interval legitimately ends at Inf.
+  one_sided <- quote(list(italic(t) == "-2.38", CI["95%"] ~ "[" * "-0.40", "Inf" * "]"))
+  expect_identical(fs(one_sided), one_sided)
+  # Names that merely contain the letters NA are not flagged.
+  expect_identical(fs("NAME: F(1, 9) = 1.00, p = .343"), "NAME: F(1, 9) = 1.00, p = .343")
+  # Every recipe with statistics routes its subtitle through the guard.
+  code <- recipe_factorialrain(data = "d", x = "a", y = "y", colour = "b", name = "f", stats = TRUE)
+  expect_match(code, "subtitle = figure_statistics(f_subtitle)", fixed = TRUE)
+})

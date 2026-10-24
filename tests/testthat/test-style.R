@@ -189,3 +189,11 @@ test_that("the wrapper help page names the palette that is really the default", 
   expect_match(txt, "NEJM palette", fixed = TRUE)
   expect_no_match(txt, "colourblind-safe Okabe-Ito palette", fixed = TRUE)
 })
+
+test_that("R CMD check's package-use check: no unused Imports; only the deliberate ggstatsplot Depends note", {
+  root <- testthat::test_path("..", "..")
+  skip_if_not(file.exists(file.path(root, "DESCRIPTION")), "source tree not available")
+  used <- tools:::.check_packages_used(dir = root)
+  expect_length(used$unused_imports, 0L) # beeswarm and patchwork are referenced (R/imports.R, R/reliability.R)
+  expect_identical(used$depends_not_import, "ggstatsplot") # by design, see R/imports.R
+})

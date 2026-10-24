@@ -58,6 +58,11 @@ test_that("two conditions: mirrored, and every subject line ends on its own poin
   # every path vertex coincides with a rain point at the same (x, y)
   key <- function(d) paste(round(d$x, 6), round(d$y, 6))
   expect_true(all(key(path) %in% key(pts)))
+  # one line per complete subject, each joining that subject's two points (not one zig-zag line)
+  complete <- d2[!is.na(d2$desire), ]
+  n_complete <- sum(table(complete$subject) == 2L)
+  expect_identical(length(unique(path$group)), n_complete)
+  expect_true(all(table(path$group) == 2L))
   # one cloud on each side: two slab layers
   expect_equal(sum(grepl("Slab", g)), 2L)
 })

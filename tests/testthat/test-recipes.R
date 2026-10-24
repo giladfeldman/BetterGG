@@ -566,3 +566,22 @@ test_that("many or long category labels are angled; many bars get smaller group 
   expect_equal(angle(run_recipe(recipe_factorialrain("f", "A", "y"), f = f)$plot_plot), 45)
   expect_equal(angle(run_recipe(recipe_factorialrain("tooth", "dose", "len"), tooth = tooth)$plot_plot), 0)
 })
+
+test_that("Bayesian raincloud, column g: an existing x_group column does not collide, and Bayes bars draw without p.value warnings (review 0.2.2)", {
+  skip_if_not_installed("BayesFactor")
+  set.seed(11)
+  d <- data.frame(g = factor(rep(c("a", "b", "c"), 20)), x_group = rnorm(60), y = rnorm(60) + rep(c(0, 0.5, 1), 20))
+  e <- new.env(); assign("d", d, e)
+  w <- character()
+  set.seed(1) # Bayes factors are estimated by sampling: same seed for the control below
+  withCallingHandlers(eval(parse(text = recipe_betweenrain("d", "g", "y", stats = TRUE, type = "bayes")), e),
+    warning = function(x) { w <<- c(w, conditionMessage(x)); invokeRestart("muffleWarning") })
+  expect_identical(e$plot_k, 3L)
+  expect_false(any(grepl("p.value", w, fixed = TRUE)))
+  expect_false(is.null(e$plot_brackets))
+  # control: the same data without the extra column gives the same Bayes subtitle
+  e2 <- new.env(); assign("d", d[c("g", "y")], e2)
+  set.seed(1)
+  suppressWarnings(eval(parse(text = recipe_betweenrain("d", "g", "y", stats = TRUE, type = "bayes")), e2))
+  expect_identical(deparse(e$plot_subtitle), deparse(e2$plot_subtitle))
+})

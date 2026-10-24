@@ -149,3 +149,16 @@ test_that("a statistics subtitle that ggstatsplot silently fails to draw is name
   expect_false(is.null(q$labels$subtitle))
   expect_no_warning(ggbetweenstats(d, grp, y, results.subtitle = FALSE))
 })
+
+test_that("grouped wrappers also warn when a panel's requested subtitle is missing (review 0.2.2)", {
+  skip_if_not_installed("BayesFactor")
+  set.seed(4)
+  d <- data.frame(g = factor(rep(c("a", "b", "c"), 40)), h = rep(c("u", "v"), each = 60), y = rnorm(120))
+  expect_warning(grouped_ggbetweenstats(d, g, y, grouping.var = h, type = "bayes"), "subtitle")
+  # control: renamed column, subtitles drawn, no such warning
+  names(d)[1] <- "grp"
+  w <- character()
+  withCallingHandlers(grouped_ggbetweenstats(d, grp, y, grouping.var = h, type = "bayes"),
+    warning = function(x) { w <<- c(w, conditionMessage(x)); invokeRestart("muffleWarning") })
+  expect_false(any(grepl("subtitle", w)))
+})

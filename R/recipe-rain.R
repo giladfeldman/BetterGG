@@ -166,14 +166,17 @@ recipe_betweenrain <- function(data, x, y, name = "plot", type = "parametric", s
   rename <- (type == "bayes" || bayes_caption) && grepl("^g(_|$)", x_raw)
   td <- paste0(v$name, "_data")
   if (rename) {
-    safe <- if (identical(eval(str2lang(v$ys)), "x_group")) "x_group_" else "x_group"
+    # the copy holds only the test's columns, so the new name cannot collide with another one
+    used <- c(x_raw, eval(str2lang(v$ys)), if (paired) subject)
+    safe <- setdiff(c("x_group", "x_group_", "x_group__"), used)[1]
     rename_code <- .fill(paste(
       "# statsExpressions' Bayesian R-squared (package performance) fails for a grouping column",
-      "# named g or g_..., so the tests use a copy in which {xs} is named {safe}.",
-      "{name}_test_data <- {name}_data",
+      "# named g or g_..., so the tests use a copy of the test's columns in which {xs} is named {safe}.",
+      "{name}_test_data <- {name}_data[{cols}]",
       "names({name}_test_data)[names({name}_test_data) == {xs}] <- {safe}",
       sep = "
-"), name = v$name, xs = v$xs, safe = .lit(safe))
+"), name = v$name, xs = v$xs, safe = .lit(safe),
+      cols = paste0("c(", paste(.lit(used), collapse = ", "), ")"))
     td <- paste0(v$name, "_test_data")
     v$xs <- .lit(safe); v$X <- .sym(safe)
   }
@@ -211,7 +214,7 @@ recipe_betweenrain <- function(data, x, y, name = "plot", type = "parametric", s
     "    {name}_brackets <- ggsignif::geom_signif(",
     "      comparisons = Map(c, {name}_shown$group1, {name}_shown$group2),",
     "      annotations = vapply(seq_len(nrow({name}_shown)), function(i) {",
-    "        paste(deparse(figure_apa_p({name}_shown$expression[[i]], {name}_shown$p.value[[i]]),",
+    "        paste(deparse(figure_apa_p({name}_shown$expression[[i]], {name}_shown[[\"p.value\"]][i]),",
     "          width.cutoff = 500L), collapse = \"\")",
     "      }, character(1)),",
     "      map_signif_level = TRUE, test = NULL, parse = TRUE, textsize = 3, tip_length = 0.01, na.rm = TRUE,",

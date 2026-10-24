@@ -42,9 +42,13 @@
 # dropping a grouping column named g) and draws the plot with no subtitle and no
 # message. When the subtitle was asked for (the default), say it is missing.
 .warn_missing_subtitle <- function(fn, call, env, plot) {
-  if (!"results.subtitle" %in% names(formals(fn)) || !inherits(plot, "ggplot")) return(invisible())
-  wanted <- if ("results.subtitle" %in% names(call)) eval(call$results.subtitle, env) else formals(fn)$results.subtitle
-  if (isTRUE(wanted) && is.null(plot$labels$subtitle)) {
+  # grouped_* functions pass results.subtitle on through `...` to the base function
+  base <- getExportedValue("ggstatsplot", sub("^grouped_", "", as.character(call[[1]][[3]])))
+  if (!"results.subtitle" %in% names(formals(base))) return(invisible())
+  wanted <- if ("results.subtitle" %in% names(call)) eval(call$results.subtitle, env) else formals(base)$results.subtitle
+  panels <- if (inherits(plot, "patchwork")) c(plot$patches$plots, list(plot)) else list(plot)
+  panels <- Filter(function(p) inherits(p, "ggplot"), panels)
+  if (isTRUE(wanted) && any(vapply(panels, function(p) is.null(p$labels$subtitle), TRUE))) {
     warning("BetterGG: 'ggstatsplot' could not compute the statistics subtitle for this figure, ",
       "so it is drawn without one (with type = \"bayes\", a grouping column named g is a known cause; ",
       "rename the column).", call. = FALSE)

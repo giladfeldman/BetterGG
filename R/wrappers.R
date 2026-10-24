@@ -84,7 +84,19 @@
   }
   if (".bgg_styled" %in% given && !identical(bgg_font(), "")) plot <- .set_family(plot, bgg_font())
   if (isTRUE(getOption("BetterGG.apa", TRUE))) plot <- apa_p(plot)
-  .crosses_under(plot)
+  .side_counts_unlabelled(.crosses_under(plot))
+}
+
+# ggscatterstats()'s marginal histograms label their counts on axes about 1 cm
+# long, where the tick labels collide. Drop those count breaks (as the recipe does).
+.side_counts_unlabelled <- function(plot) {
+  one <- function(p) {
+    if (!inherits(p, c("ggside", "ggside::ggside")) || !requireNamespace("ggside", quietly = TRUE)) return(p)
+    suppressMessages(p + ggside::scale_xsidey_continuous(breaks = NULL) +
+      ggside::scale_ysidex_continuous(breaks = NULL))
+  }
+  if (inherits(plot, "patchwork")) plot$patches$plots <- lapply(plot$patches$plots, one)
+  one(plot)
 }
 
 # ggcorrmat() draws its crosses (non-significant cells) in black over the

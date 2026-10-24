@@ -23,6 +23,8 @@
   cells are grey and drawn under the coefficients, which stay readable.
 - `recipe_piestats()` draws no empty axis lines or tick labels, and has one legend guide (title
   and borderless keys).
+- Scatter plots (`ggscatterstats()` and `recipe_scatterstats()`): the marginal histograms no
+  longer label their counts; on the ~1 cm margins those tick labels collided.
 - `save_figure()` no longer fails on PNG/TIFF/JPEG with fonts whose subscripts 'ragg'
   mis-measures (Calibri at some sizes measured ~15 million inches high, "Viewport has zero
   dimension(s)"). It measures the font at the requested resolution and, if needed, draws that

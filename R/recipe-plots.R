@@ -172,8 +172,9 @@ recipe_scatterstats <- function(data, x, y, name = "plot", type = "parametric", 
       "  # marginal histograms",
       "  ggside::geom_xsidehistogram(ggplot2::aes(y = ggplot2::after_stat(count)), fill = \"#4285F4\", colour = \"black\", bins = 30, na.rm = TRUE)",
       "  ggside::geom_ysidehistogram(ggplot2::aes(x = ggplot2::after_stat(count)), fill = \"#EA4335\", colour = \"black\", bins = 30, na.rm = TRUE)",
-      "  ggside::scale_ysidex_continuous()",
-      "  ggside::scale_xsidey_continuous()"
+      "  # no count tick labels on the narrow margins (they collide); the bars show the shape",
+      "  ggside::scale_ysidex_continuous(breaks = NULL)",
+      "  ggside::scale_xsidey_continuous(breaks = NULL)"
     )
   )
   code <- .code(prep, "", stats_code, if (!is.null(stats_code)) "", "# 2. The figure",

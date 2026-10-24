@@ -518,3 +518,17 @@ test_that("pie draws no empty axes and one legend guide with its title; corrmat 
   expect_lt(which(geoms == "GeomPoint"), which(geoms == "GeomText"))
   expect_false(identical(cm$layers[[which(geoms == "GeomPoint")]]$aes_params$colour, "black"))
 })
+
+test_that("scatter: the marginal histograms draw no count tick labels (they collided) (d-0d3461)", {
+  skip_if_not_installed("ggside")
+  side_breaks <- function(p) lapply(c("xsidey", "ysidex"), function(a) {
+    sc <- p$scales$get_scales(a)
+    if (is.null(sc)) "no scale" else sc$breaks
+  })
+  rec <- recipe_plot(recipe_scatterstats("mtcars", "wt", "mpg", name = "r"))
+  expect_identical(side_breaks(rec), list(NULL, NULL))
+  real <- suppressWarnings(ggscatterstats(mtcars, wt, mpg, results.subtitle = FALSE, bf.message = FALSE))
+  expect_identical(side_breaks(real), list(NULL, NULL))
+  # the main axes keep their breaks
+  expect_false(is.null(ggplot2::ggplot_build(rec)$layout$panel_params[[1]]$x$get_labels()))
+})

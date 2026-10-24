@@ -1,5 +1,7 @@
 # BetterGG 0.2.2
 
+- `ggreliability()`/`recipe_reliability()`: the item-rest panel no longer cuts off labels near its
+  edges (a negative item-rest r, or "not estimable", which now starts at 0 and runs right).
 - The wrappers warn when 'ggstatsplot' silently draws a figure without the statistics subtitle
   that was asked for (it catches errors in its statistics; with `type = "bayes"` a grouping
   column named `g` is one cause).

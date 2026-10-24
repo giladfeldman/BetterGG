@@ -585,3 +585,19 @@ test_that("Bayesian raincloud, column g: an existing x_group column does not col
   suppressWarnings(eval(parse(text = recipe_betweenrain("d", "g", "y", stats = TRUE, type = "bayes")), e2))
   expect_identical(deparse(e$plot_subtitle), deparse(e2$plot_subtitle))
 })
+
+test_that("reliability: the item-rest panel does not clip its labels; 'not estimable' starts at zero (review 0.2.2)", {
+  set.seed(2)
+  rel <- data.frame(i1 = sample(1:5, 50, TRUE), i2 = sample(1:5, 50, TRUE), i3 = rep(3L, 50))
+  check <- function(p) {
+    expect_identical(p$coordinates$clip, "off")
+    txt <- ggplot2::layer_data(p, which(vapply(p$layers, function(l) inherits(l$geom, "GeomText"), TRUE))[1])
+    expect_identical(txt$hjust[txt$label == "not estimable"], 0)
+    expect_true(all(txt$hjust[txt$label != "not estimable"] == 0.5))
+  }
+  p <- suppressWarnings(ggreliability(rel, c("i1", "i2", "i3")))
+  check(p) # the main plot of the patchwork is the item-rest panel
+  e <- new.env(); e$rel <- rel
+  suppressWarnings(eval(parse(text = recipe_reliability("rel", c("i1", "i2", "i3"))), e))
+  check(e$plot_rest_plot)
+})

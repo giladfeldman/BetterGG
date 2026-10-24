@@ -61,6 +61,7 @@ ggreliability <- function(data, items, reverse = NULL, stats = FALSE, title = NU
   correlations$label <- ifelse(is.na(correlations$r), "not estimable",
     sub("^(-?)0[.]", "\\1.", formatC(correlations$r, format = "f", digits = 2)))
   correlations$label_x <- ifelse(is.na(correlations$r), 0, correlations$r)
+  correlations$label_hjust <- ifelse(is.na(correlations$r), 0, 0.5) # "not estimable" runs right from 0
 
   values <- sort(unique(unlist(d, use.names = FALSE)))
   long <- data.frame(
@@ -87,8 +88,11 @@ ggreliability <- function(data, items, reverse = NULL, stats = FALSE, title = NU
     ggplot2::geom_vline(xintercept = 0, colour = "grey60", linetype = "dashed") +
     ggplot2::geom_segment(ggplot2::aes(x = 0, xend = .data$r, yend = .data$item), colour = "grey40", na.rm = TRUE) +
     ggplot2::geom_point(size = 3, colour = "black", na.rm = TRUE) +
-    ggplot2::geom_text(ggplot2::aes(x = .data$label_x, label = .data$label), nudge_y = 0.3, size = 3) +
+    ggplot2::geom_text(ggplot2::aes(x = .data$label_x, label = .data$label, hjust = .data$label_hjust),
+      nudge_y = 0.3, size = 3) +
     ggplot2::scale_x_continuous(limits = c(min(0, correlations$r, na.rm = TRUE), 1), breaks = c(0, 0.5, 1)) +
+    # labels near the panel edge (a negative r, "not estimable") are drawn, not cut off
+    ggplot2::coord_cartesian(clip = "off") +
     ggplot2::labs(x = "item-rest correlation", y = NULL) +
     theme_apa() +
     ggplot2::theme(axis.text.y = ggplot2::element_blank())
@@ -163,6 +167,7 @@ recipe_reliability <- function(data, items, reverse = NULL, name = "plot", stats
     "{name}_correlations$label <- ifelse(is.na({name}_correlations$r), \"not estimable\",",
     "  sub(\"^(-?)0[.]\", \"\\\\1.\", formatC({name}_correlations$r, format = \"f\", digits = 2)))",
     "{name}_correlations$label_x <- ifelse(is.na({name}_correlations$r), 0, {name}_correlations$r)",
+    "{name}_correlations$label_hjust <- ifelse(is.na({name}_correlations$r), 0, 0.5) # \"not estimable\" runs right from 0",
     "",
     "# 3. Responses in long format (one row per person and item).",
     "{name}_values <- sort(unique(unlist({name}_data, use.names = FALSE)))",
@@ -194,8 +199,11 @@ recipe_reliability <- function(data, items, reverse = NULL, name = "plot", stats
     "  ggplot2::geom_vline(xintercept = 0, colour = \"grey60\", linetype = \"dashed\") +",
     "  ggplot2::geom_segment(ggplot2::aes(x = 0, xend = r, yend = item), colour = \"grey40\", na.rm = TRUE) +",
     "  ggplot2::geom_point(size = 3, colour = \"black\", na.rm = TRUE) +",
-    "  ggplot2::geom_text(ggplot2::aes(x = label_x, label = label), nudge_y = 0.3, size = 3, family = figure_font) +",
+    "  ggplot2::geom_text(ggplot2::aes(x = label_x, label = label, hjust = label_hjust), nudge_y = 0.3, size = 3,",
+    "    family = figure_font) +",
     "  ggplot2::scale_x_continuous(limits = c(min(0, {name}_correlations$r, na.rm = TRUE), 1), breaks = c(0, 0.5, 1)) +",
+    "  # labels near the panel edge (a negative r, \"not estimable\") are drawn, not cut off",
+    "  ggplot2::coord_cartesian(clip = \"off\") +",
     "  ggplot2::labs(x = \"item-rest correlation\", y = NULL) +",
     "  theme_figure() +",
     "  ggplot2::theme(axis.text.y = ggplot2::element_blank())",

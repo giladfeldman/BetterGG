@@ -39,13 +39,28 @@ ggreliability <- function(data, items, reverse = NULL, stats = FALSE, title = NU
   for (item in reverse) d[[item]] <- min(d[[item]]) + max(d[[item]]) - d[[item]]
   labels <- ifelse(items %in% reverse, paste0(items, " (R)"), items)
 
+  # A correlation with a constant (an item, or the sum of the other items) is not
+  # estimable: it is labelled so and named in a warning, never shown as NA.
   rest <- vapply(items, function(item) {
-    stats::cor(d[[item]], rowSums(d[setdiff(items, item)]))
+    rest_sum <- rowSums(d[setdiff(items, item)])
+    if (stats::sd(d[[item]]) == 0 || stats::sd(rest_sum) == 0) return(NA_real_)
+    stats::cor(d[[item]], rest_sum)
   }, numeric(1))
+  if (anyNA(rest)) {
+    warning("BetterGG: item-rest correlation not estimable for ", paste(items[is.na(rest)], collapse = ", "),
+      " (the item, or the sum of the other items, has the same value in every row).", call. = FALSE)
+  }
   k <- length(items)
-  alpha <- k / (k - 1) * (1 - sum(vapply(d, stats::var, numeric(1))) / stats::var(rowSums(d)))
+  total_var <- stats::var(rowSums(d))
+  alpha <- if (total_var > 0) k / (k - 1) * (1 - sum(vapply(d, stats::var, numeric(1))) / total_var) else NA_real_
+  if (is.na(alpha)) {
+    warning("BetterGG: Cronbach's alpha not estimable (the total score has the same value in every row).",
+      call. = FALSE)
+  }
   correlations <- data.frame(item = factor(labels, levels = rev(labels)), r = unname(rest))
-  correlations$label <- sub("^(-?)0[.]", "\\1.", formatC(correlations$r, format = "f", digits = 2))
+  correlations$label <- ifelse(is.na(correlations$r), "not estimable",
+    sub("^(-?)0[.]", "\\1.", formatC(correlations$r, format = "f", digits = 2)))
+  correlations$label_x <- ifelse(is.na(correlations$r), 0, correlations$r)
 
   values <- sort(unique(unlist(d, use.names = FALSE)))
   long <- data.frame(
@@ -70,15 +85,16 @@ ggreliability <- function(data, items, reverse = NULL, stats = FALSE, title = NU
   }
   rest_plot <- ggplot2::ggplot(correlations, ggplot2::aes(x = .data$r, y = .data$item)) +
     ggplot2::geom_vline(xintercept = 0, colour = "grey60", linetype = "dashed") +
-    ggplot2::geom_segment(ggplot2::aes(x = 0, xend = .data$r, yend = .data$item), colour = "grey40") +
-    ggplot2::geom_point(size = 3, colour = "black") +
-    ggplot2::geom_text(ggplot2::aes(label = .data$label), nudge_y = 0.3, size = 3) +
-    ggplot2::scale_x_continuous(limits = c(min(0, correlations$r), 1), breaks = c(0, 0.5, 1)) +
+    ggplot2::geom_segment(ggplot2::aes(x = 0, xend = .data$r, yend = .data$item), colour = "grey40", na.rm = TRUE) +
+    ggplot2::geom_point(size = 3, colour = "black", na.rm = TRUE) +
+    ggplot2::geom_text(ggplot2::aes(x = .data$label_x, label = .data$label), nudge_y = 0.3, size = 3) +
+    ggplot2::scale_x_continuous(limits = c(min(0, correlations$r, na.rm = TRUE), 1), breaks = c(0, 0.5, 1)) +
     ggplot2::labs(x = "item-rest correlation", y = NULL) +
     theme_apa() +
     ggplot2::theme(axis.text.y = ggplot2::element_blank())
   subtitle <- if (isTRUE(stats)) {
-    paste0("Cronbach's \u03b1 = ", sub("^(-?)0[.]", "\\1.", formatC(alpha, format = "f", digits = 2)),
+    paste0("Cronbach's \u03b1 = ", if (is.na(alpha)) "not estimable" else
+      sub("^(-?)0[.]", "\\1.", formatC(alpha, format = "f", digits = 2)),
       " (k = ", k, " items, n = ", nrow(d), ")")
   }
   out <- patchwork::wrap_plots(responses, rest_plot, widths = c(2, 1)) +
@@ -124,14 +140,29 @@ recipe_reliability <- function(data, items, reverse = NULL, name = "plot", stats
     "{name}_labels <- ifelse({name}_items %in% {name}_reverse, paste0({name}_items, \" (R)\"), {name}_items)",
     "",
     "# 2. Item-rest correlations and Cronbach's alpha.",
+    "# A correlation with a constant (an item, or the sum of the other items) is not",
+    "# estimable: it is labelled so and named in a warning, never shown as NA.",
     "{name}_rest <- vapply({name}_items, function(item) {",
-    "  stats::cor({name}_data[[item]], rowSums({name}_data[setdiff({name}_items, item)]))",
+    "  rest_sum <- rowSums({name}_data[setdiff({name}_items, item)])",
+    "  if (stats::sd({name}_data[[item]]) == 0 || stats::sd(rest_sum) == 0) return(NA_real_)",
+    "  stats::cor({name}_data[[item]], rest_sum)",
     "}, numeric(1))",
+    "if (anyNA({name}_rest)) {",
+    "  warning(\"BetterGG: item-rest correlation not estimable for \", paste({name}_items[is.na({name}_rest)], collapse = \", \"),",
+    "    \" (the item, or the sum of the other items, has the same value in every row).\", call. = FALSE)",
+    "}",
     "{name}_k <- length({name}_items)",
-    "{name}_alpha <- {name}_k / ({name}_k - 1) *",
-    "  (1 - sum(vapply({name}_data, stats::var, numeric(1))) / stats::var(rowSums({name}_data)))",
+    "{name}_total_var <- stats::var(rowSums({name}_data))",
+    "{name}_alpha <- if ({name}_total_var > 0) {name}_k / ({name}_k - 1) *",
+    "  (1 - sum(vapply({name}_data, stats::var, numeric(1))) / {name}_total_var) else NA_real_",
+    "if (is.na({name}_alpha)) {",
+    "  warning(\"BetterGG: Cronbach's alpha not estimable (the total score has the same value in every row).\",",
+    "    call. = FALSE)",
+    "}",
     "{name}_correlations <- data.frame(item = factor({name}_labels, levels = rev({name}_labels)), r = unname({name}_rest))",
-    "{name}_correlations$label <- sub(\"^(-?)0[.]\", \"\\\\1.\", formatC({name}_correlations$r, format = \"f\", digits = 2))",
+    "{name}_correlations$label <- ifelse(is.na({name}_correlations$r), \"not estimable\",",
+    "  sub(\"^(-?)0[.]\", \"\\\\1.\", formatC({name}_correlations$r, format = \"f\", digits = 2)))",
+    "{name}_correlations$label_x <- ifelse(is.na({name}_correlations$r), 0, {name}_correlations$r)",
     "",
     "# 3. Responses in long format (one row per person and item).",
     "{name}_values <- sort(unique(unlist({name}_data, use.names = FALSE)))",
@@ -161,10 +192,10 @@ recipe_reliability <- function(data, items, reverse = NULL, name = "plot", stats
     "}",
     "{name}_rest_plot <- ggplot2::ggplot({name}_correlations, ggplot2::aes(x = r, y = item)) +",
     "  ggplot2::geom_vline(xintercept = 0, colour = \"grey60\", linetype = \"dashed\") +",
-    "  ggplot2::geom_segment(ggplot2::aes(x = 0, xend = r, yend = item), colour = \"grey40\") +",
-    "  ggplot2::geom_point(size = 3, colour = \"black\") +",
-    "  ggplot2::geom_text(ggplot2::aes(label = label), nudge_y = 0.3, size = 3, family = figure_font) +",
-    "  ggplot2::scale_x_continuous(limits = c(min(0, {name}_correlations$r), 1), breaks = c(0, 0.5, 1)) +",
+    "  ggplot2::geom_segment(ggplot2::aes(x = 0, xend = r, yend = item), colour = \"grey40\", na.rm = TRUE) +",
+    "  ggplot2::geom_point(size = 3, colour = \"black\", na.rm = TRUE) +",
+    "  ggplot2::geom_text(ggplot2::aes(x = label_x, label = label), nudge_y = 0.3, size = 3, family = figure_font) +",
+    "  ggplot2::scale_x_continuous(limits = c(min(0, {name}_correlations$r, na.rm = TRUE), 1), breaks = c(0, 0.5, 1)) +",
     "  ggplot2::labs(x = \"item-rest correlation\", y = NULL) +",
     "  theme_figure() +",
     "  ggplot2::theme(axis.text.y = ggplot2::element_blank())",
@@ -173,7 +204,8 @@ recipe_reliability <- function(data, items, reverse = NULL, name = "plot", stats
     sep = "\n"), name = name, data = data, items = .vec(items), reverse = .vec(reverse),
     title = if (is.null(title)) "NULL" else .lit(title),
     subtitle = if (isTRUE(stats)) .fill(paste0("paste0(\"Cronbach's \\u03b1 = \",\n",
-      "    sub(\"^(-?)0[.]\", \"\\\\1.\", formatC({name}_alpha, format = \"f\", digits = 2)),\n",
+      "    if (is.na({name}_alpha)) \"not estimable\" else\n",
+      "      sub(\"^(-?)0[.]\", \"\\\\1.\", formatC({name}_alpha, format = \"f\", digits = 2)),\n",
       "    \" (k = \", {name}_k, \" items, n = \", nrow({name}_data), \")\")"), name = name) else "NULL")
   .with_setup(code, setup, FALSE)
 }

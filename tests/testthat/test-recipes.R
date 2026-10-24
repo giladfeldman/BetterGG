@@ -472,3 +472,26 @@ test_that("Bayesian raincloud, 3+ groups: works for a column named g and draws e
   expect_no_error(suppressWarnings(eval(parse(text = recipe_withinrain("dw", "g", "y", "id", stats = TRUE, type = "bayes")), e)))
   expect_match(paste(deparse(e$plot_subtitle), collapse = " "), "BF", fixed = TRUE)
 })
+
+test_that("reliability: a constant item or total is named, never shown as NA/NaN (d-4c8fe0)", {
+  d <- data.frame(a = c(1, 2, 3, 4, 5, 4), b = c(2, 2, 3, 5, 5, 4), c = rep(3, 6))
+  expect_warning(real <- ggreliability(d, c("a", "b", "c"), stats = TRUE), "not estimable for c")
+  expect_warning(env <- run_recipe(recipe_reliability("d", c("a", "b", "c"), stats = TRUE, name = "r"), d = d),
+    "not estimable for c")
+  for (p in list(real, env$r_plot)) {
+    lab <- p$data$label # the item-rest panel
+    expect_false(any(grepl("NA|NaN", lab)))
+    expect_true("not estimable" %in% lab)
+  }
+  # alpha is still estimable: the constant item adds no variance
+  k <- 3; v <- vapply(d, stats::var, 0)
+  expect_equal(env$r_alpha, k / (k - 1) * (1 - sum(v) / stats::var(rowSums(d))))
+  expect_identical(real$patches$annotation$subtitle, env$r_plot$patches$annotation$subtitle)
+  # every item constant: alpha is not estimable either
+  z <- data.frame(a = rep(1, 5), b = rep(2, 5))
+  expect_warning(zr <- ggreliability(z, c("a", "b"), stats = TRUE), "not estimable")
+  expect_match(zr$patches$annotation$subtitle, "not estimable", fixed = TRUE)
+  expect_no_match(zr$patches$annotation$subtitle, "NaN|NA|Inf")
+  expect_warning(ze <- run_recipe(recipe_reliability("z", c("a", "b"), stats = TRUE, name = "r"), z = z), "not estimable")
+  expect_identical(zr$patches$annotation$subtitle, ze$r_plot$patches$annotation$subtitle)
+})

@@ -8,6 +8,10 @@
   does (0.2.1 drew none). A grouping column named `g` or `g_...` no longer stops the figure:
   `performance::r2_bayes()` inside statsExpressions drops such parameters as g-priors and fails,
   so the generated code runs the tests on a copy with the column renamed (statistics identical).
+- `ggreliability()` and `recipe_reliability()`: an item with the same value in every row (or
+  whose other items sum to a constant) gets an item-rest correlation labelled "not estimable"
+  and a warning naming it, instead of "NA"; a constant total score gives "Cronbach's alpha = not
+  estimable" instead of NaN.
 - `save_figure()` no longer fails on PNG/TIFF/JPEG with fonts whose subscripts 'ragg'
   mis-measures (Calibri at some sizes measured ~15 million inches high, "Viewport has zero
   dimension(s)"). It measures the font at the requested resolution and, if needed, draws that

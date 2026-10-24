@@ -30,6 +30,10 @@
 - `recipe_barstats()` and `recipe_factorialrain()`: with more than six categories, or names
   longer than 60 characters in total, the x labels are angled (bar charts also get room on the
   left for the first label and smaller group-size labels), instead of overlapping.
+- `ggbetweenstats()`/`grouped_ggbetweenstats()` leave the random-number stream, and the jittered
+  point positions, exactly as plain ggstatsplot does. BetterGG's softer points are now set on
+  ggstatsplot's own point layer after the call instead of being passed as `point.args` (whose
+  default draws a seed for the jitter); before, the stream after a call was one draw behind.
 - `save_figure()` no longer fails on PNG/TIFF/JPEG with fonts whose subscripts 'ragg'
   mis-measures (Calibri at some sizes measured ~15 million inches high, "Viewport has zero
   dimension(s)"). It measures the font at the requested resolution and, if needed, draws that

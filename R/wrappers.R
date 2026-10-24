@@ -29,7 +29,31 @@
     style <- .rng_neutral(.style_args(sub("^grouped_", "", name)))
     for (nm in setdiff(names(style), given)) call[[nm]] <- style[[nm]]
   }
-  list(plot = eval(call, env), given = c(given, if (styled) ".bgg_styled"))
+  plot <- eval(call, env)
+  if (styled && sub("^grouped_", "", name) == "ggbetweenstats" && !"point.args" %in% given) {
+    plot <- .soften_points(plot)
+  }
+  list(plot = plot, given = c(given, if (styled) ".bgg_styled"))
+}
+
+# The BetterGG points (softer, smaller) are set on ggstatsplot's own jittered
+# point layer after the call, not passed as point.args: ggstatsplot's default
+# point.args draws a random seed for the jitter, so supplying our own would
+# shift the user's random-number stream (and the jitter) away from plain
+# ggstatsplot's.
+.soften_points <- function(plot) {
+  one <- function(p) {
+    if (!inherits(p, "ggplot")) return(p)
+    p$layers <- lapply(p$layers, function(l) {
+      if (!inherits(l$geom, "GeomPoint") || !inherits(l$position, "PositionJitterdodge")) return(l)
+      new <- ggplot2::ggproto(NULL, l)
+      new$aes_params <- utils::modifyList(l$aes_params, list(alpha = 0.6, size = 2.2))
+      new
+    })
+    p
+  }
+  if (inherits(plot, "patchwork")) plot$patches$plots <- lapply(plot$patches$plots, one)
+  one(plot)
 }
 
 # Expand unique partial argument names against the formals of ggstatsplot's
@@ -45,7 +69,7 @@
 
 # Evaluate `expr` without changing the random-number state, so a user's
 # set.seed() gives exactly the same Bayesian/bootstrap results as calling
-# 'ggstatsplot' directly (position_jitterdodge() draws a seed when created).
+# 'ggstatsplot' directly.
 .rng_neutral <- function(expr) {
   had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
   if (had) old <- get(".Random.seed", envir = globalenv())
@@ -54,17 +78,14 @@
   expr
 }
 
-# Drawing defaults of the BetterGG look (black mean marker, softer points,
-# thin outlines). Each is used only when the user did not set that argument.
+# Drawing defaults of the BetterGG look (black mean marker, thin outlines).
+# Each is used only when the user did not set that argument. The softer points
+# are set afterwards by .soften_points().
 .style_args <- function(base) {
   grey <- identical(getOption("BetterGG.palette", "nejm"), "grey")
   centre <- list(centrality.point.args = list(size = 4, colour = "black"))
   switch(base,
     ggbetweenstats = c(centre, list(
-      point.args = list(
-        position = ggplot2::position_jitterdodge(dodge.width = 0.6),
-        alpha = 0.6, size = 2.2, stroke = 0, na.rm = TRUE
-      ),
       violin.args = list(width = 0.55, alpha = 0.2, linewidth = 0.3,
         colour = if (grey) "black" else "grey40", na.rm = TRUE),
       boxplot.args = list(width = 0.22, alpha = 0, linewidth = 0.35, na.rm = TRUE)

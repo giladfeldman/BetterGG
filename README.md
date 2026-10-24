@@ -66,10 +66,11 @@ Every BetterGG plot also gets, by default:
   in black-and-white. Other palettes: `"okabe_ito"`, `"viridis"`; `NULL`
   keeps ggstatsplot's colours. Pass `palette =` to use your own.
 
-The tests compare statistical results against ggstatsplot under matching seeds.
-Record exact dependencies when reproducing an analysis. The random stream after
-a plotting call can differ because the plotting defaults use different jitter
-objects; reset the seed before each independent analysis.
+The tests compare statistical results against ggstatsplot under matching seeds,
+and check that the random-number stream after a `ggbetweenstats()`,
+`grouped_ggbetweenstats()` or `ggwithinstats()` call, and the jittered point
+positions, are the same as with plain ggstatsplot. Record exact dependencies when
+reproducing an analysis.
 
 Save at journal size with embedded fonts:
 

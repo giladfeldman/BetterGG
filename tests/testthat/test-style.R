@@ -200,3 +200,25 @@ test_that("R CMD check's package-use check: no unused Imports; only the delibera
   expect_length(used$unused_imports, 0L) # beeswarm and patchwork are referenced (R/imports.R, R/reliability.R)
   expect_identical(used$depends_not_import, "ggstatsplot") # by design, see R/imports.R
 })
+
+test_that("after a call the random-number stream is where plain ggstatsplot leaves it (d-91de6f)", {
+  after <- function(f) { set.seed(7); suppressWarnings(f()); stats::runif(1) }
+  expect_identical(after(function() ggbetweenstats(mtcars, cyl, mpg)),
+    after(function() ggstatsplot::ggbetweenstats(mtcars, cyl, mpg)))
+  expect_identical(after(function() ggbetweenstats(mtcars, cyl, mpg, type = "bayes")),
+    after(function() ggstatsplot::ggbetweenstats(mtcars, cyl, mpg, type = "bayes")))
+  expect_identical(after(function() grouped_ggbetweenstats(mtcars, cyl, mpg, grouping.var = am)),
+    after(function() ggstatsplot::grouped_ggbetweenstats(mtcars, cyl, mpg, grouping.var = am)))
+  expect_identical(after(function() ggwithinstats(ggstatsplot::bugs_long, condition, desire, subject.id = subject)),
+    after(function() ggstatsplot::ggwithinstats(ggstatsplot::bugs_long, condition, desire, subject.id = subject)))
+  # the BetterGG look is kept, and the jittered positions are plain ggstatsplot's
+  set.seed(7); a <- suppressWarnings(ggbetweenstats(mtcars, cyl, mpg))
+  set.seed(7); b <- suppressWarnings(ggstatsplot::ggbetweenstats(mtcars, cyl, mpg))
+  pts <- function(p) which(vapply(p$layers, function(l) inherits(l$position, "PositionJitterdodge"), TRUE))[1]
+  expect_equal(a$layers[[pts(a)]]$aes_params[c("alpha", "size")], list(alpha = 0.6, size = 2.2))
+  expect_identical(ggplot2::layer_data(a, pts(a))$x, ggplot2::layer_data(b, pts(b))$x)
+  # a user's own point.args: BetterGG adds nothing, so the streams match too
+  pa <- list(alpha = 0.3)
+  expect_identical(after(function() ggbetweenstats(mtcars, cyl, mpg, point.args = pa)),
+    after(function() ggstatsplot::ggbetweenstats(mtcars, cyl, mpg, point.args = pa)))
+})

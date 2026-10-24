@@ -491,8 +491,7 @@ recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, sta
       "    p_value = formatC({name}_test$p.value[[1]], format = \"f\", digits = 3),",
       "    v = formatC({name}_v, format = \"f\", digits = 2),",
       "    n = prettyNum({name}_test$n.obs[[1]], big.mark = \",\"))), {name}_test$p.value[[1]])",
-      sep = "
-")), v)))
+      sep = "\n")), v)))
   }
   if (two_way) {
     code <- .code(code, do.call(.fill, c(list(paste(
@@ -514,6 +513,9 @@ recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, sta
       "  figure_apa_p(paste0(\"list(~chi['gof']^2~(\", {name}_bar_tests$df[i], \")==\", formatC({name}_bar_tests$statistic[i], format = \"f\", digits = 2),",
       "    \", ~italic(p)=='\", formatC({name}_bar_tests$p[i], format = \"f\", digits = 2), \"', ~italic(n)=='\", {name}_bar_tests$n[i], \"')\"),",
       "    {name}_bar_tests$p[i])), collapse = \"\"), character(1))",
+      "# A bar with a single category has no test: say so instead of printing p = NA",
+      "{name}_bar_tests$p_label[is.na({name}_bar_tests$p)] <- \"list(~'not estimable')\"",
+      "{name}_bar_tests$test_label[is.na({name}_bar_tests$p)] <- \"list(~'not estimable')\"",
       sep = "\n")), v)))
   }
   code

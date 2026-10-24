@@ -7,6 +7,8 @@
   be computed from these data." Inf is kept, since a one-sided confidence interval ends at Inf. The
   check is `figure_statistics()`, written by `recipe_setup(stats = TRUE)`; every recipe's subtitle
   goes through it, and `recipe_factorialrain()` now writes the statistics helpers in its setup too.
+- The per-bar goodness-of-fit labels of `recipe_barstats()` and `recipe_piestats()` read "not
+  estimable" for a bar with a single category, instead of "p = NA".
 - `recipe_barstats()` and `recipe_piestats()` take `cramers_v = "uncorrected"` to print Cramer's V
   as jamovi and SPSS report it, `sqrt(chi^2 / (n * (k - 1)))` from the same test and without an
   interval. The default, `"bias-corrected"`, is unchanged and matches `ggbarstats()`, which prints

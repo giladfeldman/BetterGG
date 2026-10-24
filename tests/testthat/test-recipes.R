@@ -433,3 +433,14 @@ test_that("a Bayesian raincloud has no p-value and draws without a warning", {
   expect_no_warning(eval(parse(text = recipe_betweenrain("d", "g", "y", stats = TRUE, type = "bayes")), e))
   expect_match(paste(deparse(e$plot_subtitle), collapse = " "), "BF", fixed = TRUE)
 })
+
+test_that("a bar with a single category is labelled not estimable, never p = NA", {
+  skip_if_not_installed("statsExpressions")
+  d <- data.frame(a = factor(rep(c("p", "q", "r"), each = 10)),
+    b = factor(c(rep("u", 10), rep("v", 5), rep("w", 5), rep("u", 5), rep("v", 5))))
+  e <- new.env(); assign("d", d, e)
+  # The tiny cells make the chi-squared approximation warn; that is the test data, not the label.
+  suppressWarnings(eval(parse(text = recipe_barstats("d", "a", "b", stats = TRUE)), e))
+  expect_identical(e$plot_bar_tests$p_label[e$plot_bar_tests$b == "w"], "list(~'not estimable')")
+  expect_false(any(grepl("NA", c(e$plot_bar_tests$p_label, e$plot_bar_tests$test_label), fixed = TRUE)))
+})

@@ -144,3 +144,19 @@ test_that("mirror keeps its sides even when the user passes cloud.args", {
   expect_identical(side(slabs[[1]]), "left")
   expect_equal(slabs[[1]]$aes_params$alpha, 0.2)
 })
+
+test_that("greyscale raincloud: rain dots take the darker outline greys, not the light fills (d-0a858e)", {
+  withr::local_options(BetterGG.palette = "grey")
+  p <- suppressWarnings(ggbetweenrain(mtcars, cyl, mpg, results.subtitle = FALSE))
+  b <- ggplot2::ggplot_build(p)
+  dots <- b$data[[which(vapply(p$layers, function(l) inherits(l$geom, "GeomDots") || grepl("Dots", class(l$geom)[1]), TRUE))[1]]]
+  expect_setequal(toupper(unique(dots$fill)), toupper(bgg_palette("grey", 3, "colour")))
+  # the cloud keeps the light fill greys
+  slab <- b$data[[1]]
+  expect_setequal(toupper(unique(slab$fill)), toupper(bgg_palette("grey", 3, "fill")))
+  # recipe draws the same
+  e <- new.env(); e$mtcars <- mtcars
+  eval(parse(text = recipe_betweenrain("mtcars", "cyl", "mpg")), e)
+  rb <- ggplot2::ggplot_build(e$plot_plot)
+  expect_setequal(toupper(unique(rb$data[[2]]$fill)), toupper(bgg_palette("grey", 3, "colour")))
+})

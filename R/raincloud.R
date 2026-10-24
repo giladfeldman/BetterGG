@@ -182,7 +182,9 @@ NULL
   } else {
     rain <- do.call(
       ggdist::stat_dots,
-      c(list(mapping = ggplot2::aes(fill = !!x, colour = !!x, group = !!x)),
+      # dots are filled with their outline colour: in greyscale the fill greys are
+      # too light for small dots (identical colours for the other palettes)
+      c(list(mapping = ggplot2::aes(colour = !!x, group = !!x, fill = ggplot2::after_scale(colour))),
         utils::modifyList(.default_rain_args$rain_between, rain.args))
     )
   }

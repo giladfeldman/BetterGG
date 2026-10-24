@@ -14,6 +14,11 @@
   estimable" instead of NaN.
 - `figure_statistics()` also catches typed missing values (`NA_real_`, `NA_integer_`,
   `NA_character_`) in a statistics label.
+- Greyscale (`options(BetterGG.palette = "grey")`): the 'ggstatsplot' wrappers now draw points
+  and outlines in the darker outline greys. A closure over a loop variable gave the colour scale
+  the light fill greys, so outlines were as pale as fills. Raincloud rain dots are filled with
+  their outline colour, so the lightest group's dots are no longer faint (identical colours for
+  the other palettes, whose fill and outline colours are the same).
 - `save_figure()` no longer fails on PNG/TIFF/JPEG with fonts whose subscripts 'ragg'
   mis-measures (Calibri at some sizes measured ~15 million inches high, "Viewport has zero
   dimension(s)"). It measures the font at the requested resolution and, if needed, draws that

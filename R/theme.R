@@ -173,8 +173,13 @@ scale_colour_bgg <- function(palette = "nejm", ...) {
       sc <- p$scales$get_scales(aes)
       if (is.null(sc) || !sc$is_discrete() || !.from_ggstatsplot(sc)) next
       new <- sc$clone()
-      pal <- named[[aes]]
-      new$palette <- if (is.null(pal)) function(n) bgg_palette(palette, n, aes) else function(n) pal
+      # local(): each palette function keeps its own aesthetic; a closure over the
+      # loop variable would see its last value ("fill") when the plot is drawn
+      new$palette <- local({
+        a <- aes
+        pal <- named[[a]]
+        if (is.null(pal)) function(n) bgg_palette(palette, n, a) else function(n) pal
+      })
       p <- suppressMessages(p + new)
     }
     p

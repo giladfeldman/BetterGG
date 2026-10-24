@@ -134,6 +134,9 @@ test_that("greyscale option: only greys, darker outlines than fills, violins fil
   cols <- unique(b$data[[1]]$colour)
   expect_length(fills, 3L)
   expect_true(all(is_grey(fills)) && all(is_grey(cols)))
+  # the points really draw the darker outline greys, the violins the light fill greys
+  expect_setequal(toupper(cols), toupper(bgg_palette("grey", 3, "colour")))
+  expect_setequal(toupper(fills), toupper(bgg_palette("grey", 3, "fill")))
   lum <- function(h) colSums(grDevices::col2rgb(h))
   expect_true(all(lum(bgg_palette("grey", 3, "colour")) < lum(bgg_palette("grey", 3, "fill"))))
   bar <- suppressWarnings(ggbarstats(mtcars, am, cyl))

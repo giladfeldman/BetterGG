@@ -96,10 +96,11 @@ recipe_histostats <- function(data, x, name = "plot", type = "parametric", stats
     .fill(paste0("  ggplot2::stat_bin(ggplot2::aes(y = ggplot2::after_stat(count), fill = ggplot2::after_stat(count)),\n",
       "    binwidth = {name}_binwidth, colour = \"black\", fill = \"grey50\", alpha = 0.7)"), name = name),
     "  # right axis: the same counts as proportions",
-    if (!is.null(facet)) "  # headroom above the tallest bar for the labels",
-    .fill(paste0("  ggplot2::scale_y_continuous(sec.axis = ggplot2::sec_axis(transform = ~ . / {name}_total,\n",
+    if (!is.null(facet)) "  # headroom above the tallest bar for the labels; counts are whole numbers",
+    .fill(paste0("  ggplot2::scale_y_continuous({breaks}sec.axis = ggplot2::sec_axis(transform = ~ . / {name}_total,\n",
       "    labels = function(p) paste0(round(100 * p), \"%\"), name = \"proportion\"){expand})"), name = name,
-      expand = if (is.null(facet)) "" else ",\n    expand = ggplot2::expansion(mult = c(0.05, 0.3))"),
+      expand = if (is.null(facet)) "" else ",\n    expand = ggplot2::expansion(mult = c(0.05, 0.3))",
+      breaks = if (is.null(facet)) "" else "breaks = function(l) { b <- pretty(l); b[b == round(b)] },\n    "),
     "  ggplot2::guides(fill = \"none\")",
     .fill("  # the {centre}", centre = centre),
     if (is.null(facet)) c(
@@ -348,15 +349,16 @@ recipe_barstats <- function(data, x, y, name = "plot", counts = NULL, stats = FA
     ),
     "  # group sizes under the bars",
     .fill(paste0("  ggplot2::geom_text(data = {name}_sizes, ggplot2::aes(x = {Y}, y = -0.05, label = N, fill = NULL),\n",
-      "    size = if ({name}_many) 2.5 else 4, family = figure_font)"), name = name, Y = .sym(y)),
+      "    size = {name}_size, family = figure_font)"), name = name, Y = .sym(y)),
     .fill("  ggplot2::labs(x = {xlab}, y = NULL, subtitle = {sub}, title = {title}, caption = NULL)",
       xlab = .lit(xlab), title = if (is.null(title)) "NULL" else .lit(title),
       sub = if (isTRUE(stats)) paste0("figure_statistics(", name, "_subtitle)") else "NULL")
   )
   many <- .fill(paste(
-    "# Many or long bar labels are angled, and the group sizes smaller, so they do not overlap.",
+    "# Many or long bar labels are angled; with many bars the group sizes get smaller, so they do not overlap.",
     "{name}_ticks <- levels(factor({name}_cells[[{ys}]]))",
     "{name}_many <- length({name}_ticks) > 6L || sum(nchar({name}_ticks)) > 60L",
+    "{name}_size <- max(2.5, min(4, 24 / length({name}_ticks)))",
     "# room on the left for the first angled label (about 4 pt per character)",
     "{name}_left_room <- max(5.5, 4 * nchar({name}_ticks[1]) - 30)",
     sep = "\n"), name = name, ys = .lit(y))

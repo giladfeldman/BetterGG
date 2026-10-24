@@ -33,10 +33,12 @@
 - Scatter plots (`ggscatterstats()` and `recipe_scatterstats()`): the marginal histograms no
   longer label their counts; on the ~1 cm margins those tick labels collided.
 - Faceted `recipe_histostats()`: each panel's mean label sits in headroom above the bars, beside
-  its line on the side with more room, instead of over the tallest bar or clipped at the edge.
+  its line on the side with more room, instead of over the tallest bar or clipped at the edge;
+  its count axis shows whole numbers only.
 - `recipe_barstats()` and `recipe_factorialrain()`: with more than six categories, or names
   longer than 60 characters in total, the x labels are angled (bar charts also get room on the
-  left for the first label and smaller group-size labels), instead of overlapping.
+  left for the first label), instead of overlapping. Group-size labels shrink only with many bars
+  (from 4 at six bars or fewer to 2.5 at ten or more), not because the names are long.
 - `ggbetweenstats()`/`grouped_ggbetweenstats()` leave the random-number stream, and the jittered
   point positions, exactly as plain ggstatsplot does. BetterGG's softer points are now set on
   ggstatsplot's own point layer after the call instead of being passed as `point.args` (whose

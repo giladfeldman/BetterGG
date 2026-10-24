@@ -601,3 +601,24 @@ test_that("reliability: the item-rest panel does not clip its labels; 'not estim
   suppressWarnings(eval(parse(text = recipe_reliability("rel", c("i1", "i2", "i3"))), e))
   check(e$plot_rest_plot)
 })
+
+test_that("bar charts: group-size labels shrink with the number of bars, not with angled label length (review 0.2.2)", {
+  set.seed(5)
+  lv <- c("strongly disagree", "disagree", "somewhat disagree", "neutral", "somewhat agree", "agree", "strongly agree")
+  d <- data.frame(g = factor(sample(c("a", "b"), 200, TRUE)), cat = factor(sample(lv, 200, TRUE), levels = lv))
+  p <- run_recipe(recipe_barstats("d", "g", "cat"), d = d)$plot_plot
+  expect_equal(p$theme$axis.text.x$angle, 45) # long labels are still angled
+  expect_gt(p$layers[[length(p$layers)]]$aes_params$size, 3) # but seven bars keep readable sizes
+})
+
+test_that("histograms: the count axis shows whole numbers only (faceted; unfaceted matches gghistostats) (review 0.2.2)", {
+  counts <- function(code) {
+    b <- ggplot2::ggplot_build(run_recipe(code, mt = mtcars)$plot_plot)
+    b$layout$panel_params[[1]]$y$breaks
+  }
+  for (code in list(recipe_histostats("mt", "mpg", facet = "am"), recipe_histostats("mt", "mpg"))) {
+    br <- stats::na.omit(counts(code))
+    expect_gt(length(br), 2)
+    expect_true(all(br == round(br)), info = paste(br, collapse = ", "))
+  }
+})

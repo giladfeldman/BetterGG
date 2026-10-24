@@ -393,6 +393,12 @@ test_that("a statistic that cannot be computed is labelled, never drawn as NA", 
   expect_identical(fs(quote(list(italic(t) == "1.20"))), quote(list(italic(t) == "1.20")))
   expect_warning(out <- fs(quote(list(italic(t) == "NA"))), "could not be computed")
   expect_match(out, "^Statistics not shown")
+  # typed missing values deparse as NA_real_ / NA_integer_ / NA_character_ (d-e28067)
+  for (na in list(NA_real_, NA_integer_, NA_character_)) {
+    expect_warning(out <- fs(bquote(list(italic(t) == .(na)))), "could not be computed")
+    expect_match(out, "^Statistics not shown")
+  }
+  expect_warning(fs("t(98) = NA_real_"), "The test")
   # A one-sided test's interval legitimately ends at Inf.
   one_sided <- quote(list(italic(t) == "-2.38", CI["95%"] ~ "[" * "-0.40", "Inf" * "]"))
   expect_identical(fs(one_sided), one_sided)

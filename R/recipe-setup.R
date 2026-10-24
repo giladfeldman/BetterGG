@@ -137,7 +137,7 @@ recipe_setup <- function(palette = getOption("BetterGG.palette", "nejm"), n_colo
     "# NA: its line says so, and a warning names it. Inf is kept: a one-sided test's",
     "# confidence interval ends at Inf, as in jamovi.",
     "figure_statistics <- function(label) {",
-    "  missing_value <- \"(^|[^A-Za-z0-9_.])(NA|NaN)([^A-Za-z0-9_.]|$)\"",
+    "  missing_value <- \"(^|[^A-Za-z0-9_.])(NA_real_|NA_integer_|NA_character_|NA|NaN)([^A-Za-z0-9_.]|$)\"",
     "  if (is.language(label) || is.expression(label)) {",
     "    if (!grepl(missing_value, paste(deparse(label), collapse = \" \"))) return(label)",
     "    warning(\"BetterGG: the test on this figure could not be computed from these data, so it is not shown.\", call. = FALSE)",

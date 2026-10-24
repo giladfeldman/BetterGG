@@ -12,6 +12,8 @@
   whose other items sum to a constant) gets an item-rest correlation labelled "not estimable"
   and a warning naming it, instead of "NA"; a constant total score gives "Cronbach's alpha = not
   estimable" instead of NaN.
+- `figure_statistics()` also catches typed missing values (`NA_real_`, `NA_integer_`,
+  `NA_character_`) in a statistics label.
 - `save_figure()` no longer fails on PNG/TIFF/JPEG with fonts whose subscripts 'ragg'
   mis-measures (Calibri at some sizes measured ~15 million inches high, "Viewport has zero
   dimension(s)"). It measures the font at the requested resolution and, if needed, draws that

@@ -34,6 +34,9 @@
   point positions, exactly as plain ggstatsplot does. BetterGG's softer points are now set on
   ggstatsplot's own point layer after the call instead of being passed as `point.args` (whose
   default draws a seed for the jitter); before, the stream after a call was one draw behind.
+- `ggbetweenstats()`, `grouped_ggbetweenstats()` and the between-subjects rainclouds warn when
+  given `var.equal = TRUE` with a parametric test: 'ggstatsplot' ignores it and draws Welch's test
+  (and Games-Howell pairwise comparisons). `recipe_betweenrain(var.equal = TRUE)` honours it.
 - `save_figure()` no longer fails on PNG/TIFF/JPEG with fonts whose subscripts 'ragg'
   mis-measures (Calibri at some sizes measured ~15 million inches high, "Viewport has zero
   dimension(s)"). It measures the font at the requested resolution and, if needed, draws that

@@ -75,6 +75,10 @@ defaults changed, each of which you can switch off:
 \code{options(BetterGG.palette = "grey")}, \code{"okabe_ito"} or \code{"viridis"} to
 change it, \code{NULL} to keep 'ggstatsplot''s palette.
 }
+
+'ggstatsplot''s \code{ggbetweenstats()} always runs Welch's test and ignores
+\code{var.equal = TRUE}; BetterGG warns when it is given. \code{\link[=recipe_betweenrain]{recipe_betweenrain()}}
+honours it (Student's t / Fisher's ANOVA).
 }
 \examples{
 library(BetterGG)

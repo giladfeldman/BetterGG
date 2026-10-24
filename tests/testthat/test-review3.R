@@ -121,3 +121,14 @@ test_that("ggstatsplot issue #299: a non-integer test.value is tested as given (
   expect_match(txt, sprintf("\"%.2f\"", unname(ref$statistic)), fixed = TRUE)
   expect_match(txt, sub("\"0.", "\".", sprintf("\"%.3f\"", ref$p.value), fixed = TRUE), fixed = TRUE)
 })
+
+test_that("var.equal = TRUE, which ggstatsplot ignores (always Welch), is named in a warning (d-ef7283)", {
+  expect_warning(p <- ggbetweenstats(mtcars, am, mpg, var.equal = TRUE, results.subtitle = TRUE), "var.equal.*Welch")
+  expect_match(paste(deparse(p$labels$subtitle), collapse = ""), "Welch", fixed = TRUE)
+  expect_warning(grouped_ggbetweenstats(mtcars, am, mpg, grouping.var = vs, var.equal = TRUE), "var.equal.*Welch")
+  expect_warning(ggbetweenrain(mtcars, am, mpg, var.equal = TRUE), "var.equal.*Welch")
+  # no warning when it is not asked for, or FALSE (Welch is what is drawn), or the test is not parametric
+  expect_no_warning(ggbetweenstats(mtcars, am, mpg, results.subtitle = FALSE))
+  expect_no_warning(ggbetweenstats(mtcars, am, mpg, var.equal = FALSE, results.subtitle = FALSE))
+  expect_no_warning(suppressMessages(ggbetweenstats(mtcars, am, mpg, type = "np", var.equal = TRUE)))
+})

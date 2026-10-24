@@ -29,11 +29,25 @@
     style <- .rng_neutral(.style_args(sub("^grouped_", "", name)))
     for (nm in setdiff(names(style), given)) call[[nm]] <- style[[nm]]
   }
+  if (sub("^grouped_", "", name) == "ggbetweenstats") .warn_var_equal(call, env)
   plot <- eval(call, env)
   if (styled && sub("^grouped_", "", name) == "ggbetweenstats" && !"point.args" %in% given) {
     plot <- .soften_points(plot)
   }
   list(plot = plot, given = c(given, if (styled) ".bgg_styled"))
+}
+
+# ggbetweenstats() takes var.equal only through `...` and never uses it: its
+# parametric test is always Welch's (statsExpressions is called without it).
+# Say so instead of letting var.equal = TRUE look as if it gave Student's t.
+.warn_var_equal <- function(call, env) {
+  if (!"var.equal" %in% names(call) || !isTRUE(eval(call$var.equal, env))) return(invisible())
+  type <- if ("type" %in% names(call)) eval(call$type, env) else "parametric"
+  # statsExpressions reads the type by its first letter: "p" is parametric
+  if (!is.character(type) || !startsWith(type, "p")) return(invisible())
+  warning("BetterGG: 'ggstatsplot' ignores var.equal = TRUE; this figure shows Welch's test ",
+    "(and Games-Howell pairwise comparisons). recipe_betweenrain(var.equal = TRUE) draws ",
+    "Student's t / Fisher's ANOVA.", call. = FALSE)
 }
 
 # The BetterGG points (softer, smaller) are set on ggstatsplot's own jittered
@@ -153,6 +167,10 @@
 #' * the NEJM palette ([bgg_palette()]), unless you pass `palette =`;
 #'   `options(BetterGG.palette = "grey")`, `"okabe_ito"` or `"viridis"` to
 #'   change it, `NULL` to keep 'ggstatsplot''s palette.
+#'
+#' 'ggstatsplot''s `ggbetweenstats()` always runs Welch's test and ignores
+#' `var.equal = TRUE`; BetterGG warns when it is given. [recipe_betweenrain()]
+#' honours it (Student's t / Fisher's ANOVA).
 #'
 #' @param ... Passed to the 'ggstatsplot' function of the same name.
 #' @return A `ggplot` (or `patchwork`) object.

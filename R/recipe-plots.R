@@ -335,6 +335,9 @@ recipe_barstats <- function(data, x, y, name = "plot", counts = NULL, stats = FA
       "    na.rm = TRUE, show.legend = FALSE, alpha = 1, fill = \"white\", family = figure_font)"), X = .sym(x)),
     "  theme_figure()",
     "  ggplot2::theme(panel.grid.major.x = ggplot2::element_blank())",
+    .fill(paste0("  (if ({name}_many) ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, vjust = 1),
+",
+      "    plot.margin = ggplot2::margin(5.5, 5.5, 5.5, {name}_left_room)))"), name = name),
     .fill("  ggplot2::guides(fill = ggplot2::guide_legend(title = {lt}))", lt = .lit(legend.title)),
     .fill("  ggplot2::scale_fill_manual(values = {name}_fills, name = \"\", drop = FALSE)", name = name),
     if (!is.null(facet)) .fill("  ggplot2::facet_wrap(ggplot2::vars({F}), labeller = ggplot2::label_wrap_gen(width = 30))", F = .sym(facet)),
@@ -345,12 +348,19 @@ recipe_barstats <- function(data, x, y, name = "plot", counts = NULL, stats = FA
     ),
     "  # group sizes under the bars",
     .fill(paste0("  ggplot2::geom_text(data = {name}_sizes, ggplot2::aes(x = {Y}, y = -0.05, label = N, fill = NULL),\n",
-      "    size = 4, family = figure_font)"), name = name, Y = .sym(y)),
+      "    size = if ({name}_many) 2.5 else 4, family = figure_font)"), name = name, Y = .sym(y)),
     .fill("  ggplot2::labs(x = {xlab}, y = NULL, subtitle = {sub}, title = {title}, caption = NULL)",
       xlab = .lit(xlab), title = if (is.null(title)) "NULL" else .lit(title),
       sub = if (isTRUE(stats)) paste0("figure_statistics(", name, "_subtitle)") else "NULL")
   )
-  code <- .code(prep, "", stats_code, if (!is.null(stats_code)) "", "# 3. The figure",
+  many <- .fill(paste(
+    "# Many or long bar labels are angled, and the group sizes smaller, so they do not overlap.",
+    "{name}_ticks <- levels(factor({name}_cells[[{ys}]]))",
+    "{name}_many <- length({name}_ticks) > 6L || sum(nchar({name}_ticks)) > 60L",
+    "# room on the left for the first angled label (about 4 pt per character)",
+    "{name}_left_room <- max(5.5, 4 * nchar({name}_ticks[1]) - 30)",
+    sep = "\n"), name = name, ys = .lit(y))
+  code <- .code(prep, "", stats_code, if (!is.null(stats_code)) "", "# 3. The figure", many,
     .join_layers(paste0(name, "_plot"), layers))
   .with_setup(code, setup, stats)
 }

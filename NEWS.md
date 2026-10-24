@@ -27,6 +27,9 @@
   longer label their counts; on the ~1 cm margins those tick labels collided.
 - Faceted `recipe_histostats()`: each panel's mean label sits in headroom above the bars, beside
   its line on the side with more room, instead of over the tallest bar or clipped at the edge.
+- `recipe_barstats()` and `recipe_factorialrain()`: with more than six categories, or names
+  longer than 60 characters in total, the x labels are angled (bar charts also get room on the
+  left for the first label and smaller group-size labels), instead of overlapping.
 - `save_figure()` no longer fails on PNG/TIFF/JPEG with fonts whose subscripts 'ragg'
   mis-measures (Calibri at some sizes measured ~15 million inches high, "Viewport has zero
   dimension(s)"). It measures the font at the requested resolution and, if needed, draws that

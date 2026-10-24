@@ -548,3 +548,21 @@ test_that("faceted histogram: mean labels sit in headroom above the bars, beside
   mid <- mean(xr)
   expect_true(all(ifelse(lab$x < mid, lab$hjust < 0.5, lab$hjust > 0.5)))
 })
+
+test_that("many or long category labels are angled; many bars get smaller group sizes (d-1afbc3)", {
+  set.seed(5)
+  lv <- paste("category label", 1:12)
+  d <- data.frame(a = factor(sample(c("p", "q"), 300, TRUE)), b = factor(sample(lv, 300, TRUE), levels = lv))
+  angle <- function(p) p$theme$axis.text.x$angle %||% 0
+  many <- run_recipe(recipe_barstats("d", "a", "b"), d = d)$plot_plot
+  expect_equal(angle(many), 45)
+  sizes <- many$layers[[length(many$layers)]]
+  expect_lt(sizes$aes_params$size, 4)
+  few <- run_recipe(recipe_barstats("mtcars", "am", "cyl"), mtcars = mtcars)$plot_plot
+  expect_equal(angle(few), 0)
+  expect_equal(few$layers[[length(few$layers)]]$aes_params$size, 4)
+  f <- data.frame(y = rnorm(120), A = factor(sample(c("very long condition label one",
+    "very long condition label two", "another quite long label"), 120, TRUE)))
+  expect_equal(angle(run_recipe(recipe_factorialrain("f", "A", "y"), f = f)$plot_plot), 45)
+  expect_equal(angle(run_recipe(recipe_factorialrain("tooth", "dose", "len"), tooth = tooth)$plot_plot), 0)
+})

@@ -157,6 +157,9 @@ recipe_factorialrain <- function(data, x, y, colour = NULL, facet = NULL, covari
     "  theme_figure()",
     .fill("  ggplot2::theme(legend.position = {pos}, panel.grid.major.x = ggplot2::element_blank())",
       pos = if (is.null(colour)) "\"none\"" else "\"bottom\""),
+    "  # many or long level names are angled so they do not overlap",
+    .fill(paste0("  (if (nlevels({name}_data[[{xs}]]) > 6L || sum(nchar(levels({name}_data[[{xs}]]))) > 60L)\n",
+      "    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, vjust = 1)))"), name = name, xs = v$xs),
     if (!is.null(facet)) .fill("  ggplot2::facet_wrap(ggplot2::vars(.data[[{fs}]]), labeller = ggplot2::label_wrap_gen(width = 30))", fs = .lit(facet))
   )
   plot <- .join_layers(paste0(name, "_plot"), layers)

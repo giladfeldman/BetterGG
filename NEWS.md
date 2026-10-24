@@ -1,5 +1,8 @@
 # BetterGG (development version)
 
+- The wrappers warn when 'ggstatsplot' silently draws a figure without the statistics subtitle
+  that was asked for (it catches errors in its statistics; with `type = "bayes"` a grouping
+  column named `g` is one cause).
 - `grouped_ggbetweenstats()` and the other `grouped_*` wrappers recognise an abbreviated
   `pal =` or `ggth =` (as R does when the call reaches the ggstatsplot function). Before, the
   user's palette or theme was drawn over by the BetterGG palette and `theme_apa()`.
@@ -19,6 +22,8 @@
   the light fill greys, so outlines were as pale as fills. Raincloud rain dots are filled with
   their outline colour, so the lightest group's dots are no longer faint (identical colours for
   the other palettes, whose fill and outline colours are the same).
+  The dots draw no fill legend key of their own, so a raincloud with its own x title draws
+  without an "Unable to apply staged modifications" warning.
 - Correlation matrices (`ggcorrmat()` and `recipe_corrmat()`): the crosses over non-significant
   cells are grey and drawn under the coefficients, which stay readable.
 - `recipe_piestats()` draws no empty axis lines or tick labels, and has one legend guide (title

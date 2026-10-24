@@ -132,3 +132,20 @@ test_that("var.equal = TRUE, which ggstatsplot ignores (always Welch), is named 
   expect_no_warning(ggbetweenstats(mtcars, am, mpg, var.equal = FALSE, results.subtitle = FALSE))
   expect_no_warning(suppressMessages(ggbetweenstats(mtcars, am, mpg, type = "np", var.equal = TRUE)))
 })
+
+test_that("a statistics subtitle that ggstatsplot silently fails to draw is named in a warning (d-49f730)", {
+  skip_if_not_installed("BayesFactor")
+  set.seed(3)
+  d <- data.frame(g = factor(rep(c("a", "b", "c"), 20)), y = rnorm(60))
+  # a grouping column named g breaks ggstatsplot's Bayesian subtitle (performance::r2_bayes)
+  expect_warning(p <- ggbetweenstats(d, g, y, type = "bayes"), "subtitle")
+  expect_null(p$labels$subtitle)
+  # controls: another column name draws the subtitle without that warning; results.subtitle = FALSE asks for none
+  names(d)[1] <- "grp"
+  w <- character()
+  q <- withCallingHandlers(ggbetweenstats(d, grp, y, type = "bayes"),
+    warning = function(x) { w <<- c(w, conditionMessage(x)); invokeRestart("muffleWarning") })
+  expect_false(any(grepl("subtitle", w)))
+  expect_false(is.null(q$labels$subtitle))
+  expect_no_warning(ggbetweenstats(d, grp, y, results.subtitle = FALSE))
+})

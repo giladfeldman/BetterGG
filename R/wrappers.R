@@ -31,10 +31,24 @@
   }
   if (sub("^grouped_", "", name) == "ggbetweenstats") .warn_var_equal(call, env)
   plot <- eval(call, env)
+  .warn_missing_subtitle(fn, call, env, plot)
   if (styled && sub("^grouped_", "", name) == "ggbetweenstats" && !"point.args" %in% given) {
     plot <- .soften_points(plot)
   }
   list(plot = plot, given = c(given, if (styled) ".bgg_styled"))
+}
+
+# ggstatsplot catches an error in its statistics (e.g. performance::r2_bayes()
+# dropping a grouping column named g) and draws the plot with no subtitle and no
+# message. When the subtitle was asked for (the default), say it is missing.
+.warn_missing_subtitle <- function(fn, call, env, plot) {
+  if (!"results.subtitle" %in% names(formals(fn)) || !inherits(plot, "ggplot")) return(invisible())
+  wanted <- if ("results.subtitle" %in% names(call)) eval(call$results.subtitle, env) else formals(fn)$results.subtitle
+  if (isTRUE(wanted) && is.null(plot$labels$subtitle)) {
+    warning("BetterGG: 'ggstatsplot' could not compute the statistics subtitle for this figure, ",
+      "so it is drawn without one (with type = \"bayes\", a grouping column named g is a known cause; ",
+      "rename the column).", call. = FALSE)
+  }
 }
 
 # ggbetweenstats() takes var.equal only through `...` and never uses it: its

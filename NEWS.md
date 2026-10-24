@@ -19,6 +19,10 @@
   the light fill greys, so outlines were as pale as fills. Raincloud rain dots are filled with
   their outline colour, so the lightest group's dots are no longer faint (identical colours for
   the other palettes, whose fill and outline colours are the same).
+- Correlation matrices (`ggcorrmat()` and `recipe_corrmat()`): the crosses over non-significant
+  cells are grey and drawn under the coefficients, which stay readable.
+- `recipe_piestats()` draws no empty axis lines or tick labels, and has one legend guide (title
+  and borderless keys).
 - `save_figure()` no longer fails on PNG/TIFF/JPEG with fonts whose subscripts 'ragg'
   mis-measures (Calibri at some sizes measured ~15 million inches high, "Viewport has zero
   dimension(s)"). It measures the font at the requested resolution and, if needed, draws that

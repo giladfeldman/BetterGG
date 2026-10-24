@@ -501,3 +501,20 @@ test_that("reliability: a constant item or total is named, never shown as NA/NaN
   expect_warning(ze <- run_recipe(recipe_reliability("z", c("a", "b"), stats = TRUE, name = "r"), z = z), "not estimable")
   expect_identical(zr$patches$annotation$subtitle, ze$r_plot$patches$annotation$subtitle)
 })
+
+test_that("pie draws no empty axes and one legend guide with its title; corrmat crosses sit under the numbers (d-12e5d8, d-2110ef)", {
+  d <- mtcars; d$cyl <- factor(d$cyl)
+  code <- recipe_piestats("d", "cyl")
+  expect_identical(lengths(regmatches(code, gregexpr("ggplot2::guides(", code, fixed = TRUE))), 1L)
+  e <- run_recipe(code, d = d)
+  p <- e$plot_plot
+  expect_s3_class(p$theme$axis.line, "element_blank")
+  expect_s3_class(p$theme$axis.text, "element_blank")
+  expect_identical(p$guides$guides$fill$params$title %||% p$guides$guides$fill$title, "cyl")
+  set.seed(1)
+  cd <- data.frame(a = rnorm(50), b = rnorm(50), c = rnorm(50))
+  cm <- run_recipe(recipe_corrmat("cd", c("a", "b", "c")), cd = cd)$plot_plot
+  geoms <- vapply(cm$layers, function(l) class(l$geom)[1], "")
+  expect_lt(which(geoms == "GeomPoint"), which(geoms == "GeomText"))
+  expect_false(identical(cm$layers[[which(geoms == "GeomPoint")]]$aes_params$colour, "black"))
+})

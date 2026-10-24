@@ -84,7 +84,28 @@
   }
   if (".bgg_styled" %in% given && !identical(bgg_font(), "")) plot <- .set_family(plot, bgg_font())
   if (isTRUE(getOption("BetterGG.apa", TRUE))) plot <- apa_p(plot)
-  plot
+  .crosses_under(plot)
+}
+
+# ggcorrmat() draws its crosses (non-significant cells) in black over the
+# coefficients, hiding them. Draw them in grey, under the numbers.
+.crosses_under <- function(plot) {
+  one <- function(p) {
+    if (!inherits(p, "ggplot")) return(p)
+    geom <- vapply(p$layers, function(l) class(l$geom)[1], "")
+    text <- which(geom == "GeomText")
+    cross <- which(geom == "GeomPoint" & vapply(p$layers, function(l) {
+      isTRUE(l$aes_params$shape %in% c(4, "cross"))
+    }, TRUE))
+    if (!"GeomTile" %in% geom || length(text) != 1L || length(cross) != 1L || cross < text) return(p)
+    old <- p$layers[[cross]] # a variable: ggproto() resolves its parent lazily
+    l <- ggplot2::ggproto(NULL, old)
+    l$aes_params$colour <- "grey60"
+    p$layers <- append(p$layers[-cross], list(l), after = text - 1L)
+    p
+  }
+  if (inherits(plot, "patchwork")) plot$patches$plots <- lapply(plot$patches$plots, one)
+  one(plot)
 }
 
 #' 'ggstatsplot' functions with APA styling

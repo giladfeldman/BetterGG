@@ -105,3 +105,19 @@ test_that("save_figure: a font whose plotmath metrics break ragg falls back to C
     y = stats::rnorm(20)), c, y))
   expect_warning(save_figure(q, f, width = 11.8, height = 5.45, dpi = 110), "Cairo")
 })
+
+test_that("ggstatsplot issue #312: y limits via ggplot.component reach every grouped panel (d-9f1901)", {
+  g <- suppressMessages(suppressWarnings(grouped_ggbetweenstats(mtcars, cyl, mpg, grouping.var = am,
+    results.subtitle = FALSE, ggplot.component = ggplot2::scale_y_continuous(limits = c(0, 40)))))
+  ranges <- lapply(c(g$patches$plots, list(g)), function(p) ggplot2::ggplot_build(p)$layout$panel_params[[1]]$y.range)
+  expect_length(ranges, 2L)
+  for (r in ranges) expect_equal(r, c(0, 40) + c(-2, 2)) # limits plus ggplot2's 5% expansion
+})
+
+test_that("ggstatsplot issue #299: a non-integer test.value is tested as given (d-9f1901)", {
+  h <- suppressWarnings(gghistostats(mtcars, wt, test.value = 3.5))
+  ref <- stats::t.test(mtcars$wt, mu = 3.5)
+  txt <- paste(deparse(h$labels$subtitle), collapse = " ")
+  expect_match(txt, sprintf("\"%.2f\"", unname(ref$statistic)), fixed = TRUE)
+  expect_match(txt, sub("\"0.", "\".", sprintf("\"%.3f\"", ref$p.value), fixed = TRUE), fixed = TRUE)
+})

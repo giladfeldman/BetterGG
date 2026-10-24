@@ -160,3 +160,14 @@ test_that("greyscale raincloud: rain dots take the darker outline greys, not the
   rb <- ggplot2::ggplot_build(e$plot_plot)
   expect_setequal(toupper(unique(rb$data[[2]]$fill)), toupper(bgg_palette("grey", 3, "colour")))
 })
+
+test_that("raincloud with its own x title draws without a staged-fill warning (rain dots filled with their colour)", {
+  draw <- function(p) invisible(ggplot2::ggplot_gtable(ggplot2::ggplot_build(p)))
+  e <- new.env(); e$mtcars <- mtcars
+  eval(parse(text = recipe_betweenrain("mtcars", "cyl", "mpg", xlab = "Cylinders")), e)
+  expect_no_warning(draw(e$plot_plot))
+  # control: the same plot with the colour title reset to the fill title draws cleanly too
+  expect_no_warning(draw(e$plot_plot + ggplot2::labs(colour = "cyl", fill = "cyl")))
+  p <- suppressWarnings(ggbetweenrain(mtcars, cyl, mpg, xlab = "Cylinders", results.subtitle = FALSE))
+  expect_no_warning(draw(p))
+})

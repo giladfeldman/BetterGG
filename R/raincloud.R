@@ -184,7 +184,10 @@ NULL
       ggdist::stat_dots,
       # dots are filled with their outline colour: in greyscale the fill greys are
       # too light for small dots (identical colours for the other palettes)
-      c(list(mapping = ggplot2::aes(colour = !!x, group = !!x, fill = ggplot2::after_scale(colour))),
+      # (no fill legend key of its own: with a colour title different from the fill title the
+      # key would be drawn without a colour and the staged fill would fail)
+      c(list(mapping = ggplot2::aes(colour = !!x, group = !!x, fill = ggplot2::after_scale(colour)),
+        show.legend = c(fill = FALSE)),
         utils::modifyList(.default_rain_args$rain_between, rain.args))
     )
   }

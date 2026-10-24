@@ -532,3 +532,19 @@ test_that("scatter: the marginal histograms draw no count tick labels (they coll
   # the main axes keep their breaks
   expect_false(is.null(ggplot2::ggplot_build(rec)$layout$panel_params[[1]]$x$get_labels()))
 })
+
+test_that("faceted histogram: mean labels sit in headroom above the bars, beside their line, inside the panel (d-ca0c14)", {
+  set.seed(4)
+  d <- data.frame(x = c(rnorm(80, 10), rnorm(80, 14)), g = rep(c("a", "b"), each = 80))
+  e <- run_recipe(recipe_histostats("d", "x", facet = "g"), d = d)
+  b <- ggplot2::ggplot_build(e$plot_plot)
+  lab <- b$data[[which(vapply(e$plot_plot$layers, function(l) inherits(l$geom, "GeomLabel"), TRUE))]]
+  bars <- b$data[[1]]
+  # headroom: the top of the y range is well above the tallest bar
+  top <- b$layout$panel_params[[1]]$y.range[2]
+  expect_gt(top, 1.15 * max(bars$count))
+  # beside the line: left-justified in the left half of the x range, right-justified in the right half
+  xr <- b$layout$panel_params[[1]]$x.range
+  mid <- mean(xr)
+  expect_true(all(ifelse(lab$x < mid, lab$hjust < 0.5, lab$hjust > 0.5)))
+})

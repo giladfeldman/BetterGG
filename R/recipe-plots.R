@@ -67,6 +67,8 @@ recipe_histostats <- function(data, x, name = "plot", type = "parametric", stats
       "}))",
       "names({name}_centres)[1] <- {fs}",
       "{name}_centres$label <- paste0(\"list(widehat(mu)[{centre}]=='\", formatC({name}_centres$value, format = \"f\", digits = 2), \"')\")",
+      "# each label beside its line, on the side with more room, so it stays inside the panel",
+      "{name}_centres$hjust <- ifelse({name}_centres$value < mean(range({name}_data[[{xs}]])), -0.05, 1.05)",
       sep = "\n"), name = name, fs = .lit(facet), xs = v$xs, ws = v$ws, centre = centre, centre_fun = centre_fun))
   }
   bw <- if (is.null(binwidth)) {
@@ -94,8 +96,10 @@ recipe_histostats <- function(data, x, name = "plot", type = "parametric", stats
     .fill(paste0("  ggplot2::stat_bin(ggplot2::aes(y = ggplot2::after_stat(count), fill = ggplot2::after_stat(count)),\n",
       "    binwidth = {name}_binwidth, colour = \"black\", fill = \"grey50\", alpha = 0.7)"), name = name),
     "  # right axis: the same counts as proportions",
+    if (!is.null(facet)) "  # headroom above the tallest bar for the labels",
     .fill(paste0("  ggplot2::scale_y_continuous(sec.axis = ggplot2::sec_axis(transform = ~ . / {name}_total,\n",
-      "    labels = function(p) paste0(round(100 * p), \"%\"), name = \"proportion\"))"), name = name),
+      "    labels = function(p) paste0(round(100 * p), \"%\"), name = \"proportion\"){expand})"), name = name,
+      expand = if (is.null(facet)) "" else ",\n    expand = ggplot2::expansion(mult = c(0.05, 0.3))"),
     "  ggplot2::guides(fill = \"none\")",
     .fill("  # the {centre}", centre = centre),
     if (is.null(facet)) c(
@@ -106,7 +110,7 @@ recipe_histostats <- function(data, x, name = "plot", type = "parametric", stats
     ) else c(
       .fill(paste0("  ggplot2::geom_vline(data = {name}_centres, ggplot2::aes(xintercept = value), colour = \"blue\",\n",
         "    linewidth = 1, linetype = \"dashed\")"), name = name),
-      .fill(paste0("  ggplot2::geom_label(data = {name}_centres, ggplot2::aes(x = value, y = Inf, label = label),\n",
+      .fill(paste0("  ggplot2::geom_label(data = {name}_centres, ggplot2::aes(x = value, y = Inf, label = label, hjust = hjust),\n",
         "    inherit.aes = FALSE, parse = TRUE, vjust = 1.2, size = 3, family = figure_font)"), name = name),
       .fill("  ggplot2::facet_wrap(ggplot2::vars(.data[[{fs}]]), labeller = ggplot2::label_wrap_gen(width = 30))", fs = .lit(facet))
     ),

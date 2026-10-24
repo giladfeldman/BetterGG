@@ -1,4 +1,4 @@
-# BetterGG (development version)
+# BetterGG 0.2.2
 
 - The wrappers warn when 'ggstatsplot' silently draws a figure without the statistics subtitle
   that was asked for (it catches errors in its statistics; with `type = "bayes"` a grouping

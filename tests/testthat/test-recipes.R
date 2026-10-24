@@ -444,3 +444,31 @@ test_that("a bar with a single category is labelled not estimable, never p = NA"
   expect_identical(e$plot_bar_tests$p_label[e$plot_bar_tests$b == "w"], "list(~'not estimable')")
   expect_false(any(grepl("NA", c(e$plot_bar_tests$p_label, e$plot_bar_tests$test_label), fixed = TRUE)))
 })
+
+test_that("Bayesian raincloud, 3+ groups: works for a column named g and draws every pair like ggbetweenstats (d-dbe80d)", {
+  skip_if_not_installed("statsExpressions"); skip_if_not_installed("BayesFactor")
+  set.seed(42)
+  y <- rnorm(60) + rep(c(0, 0.8, 1.6), each = 20)
+  lv <- factor(rep(c("a", "b", "c"), each = 20))
+  run <- function(col) {
+    d <- data.frame(lv, y); names(d)[1] <- col
+    e <- new.env(); assign("d", d, e)
+    set.seed(1)
+    expect_no_error(suppressWarnings(eval(parse(text = recipe_betweenrain("d", col, "y", stats = TRUE, type = "bayes")), e)))
+    e
+  }
+  g <- run("g"); grp <- run("grp")
+  expect_match(paste(deparse(g$plot_subtitle), collapse = " "), "BF", fixed = TRUE)
+  # renaming the column for the test changes nothing but the name
+  expect_identical(deparse(g$plot_subtitle), deparse(grp$plot_subtitle))
+  # ggbetweenstats(type = "bayes") draws a bar for every pair, labelled with its Bayes factor
+  expect_s3_class(g$plot_brackets, "LayerInstance")
+  expect_length(g$plot_brackets$stat_params$comparisons, 3L)
+  expect_true(all(grepl("BF", g$plot_brackets$stat_params$annotations, fixed = TRUE)))
+  expect_match(paste(deparse(g$plot_pairwise_note), collapse = " "), "all (Bayes factors)", fixed = TRUE)
+  # the paired (within) design with a condition column named g also runs
+  dw <- data.frame(id = rep(1:20, 3), g = lv, y = y)
+  e <- new.env(); assign("dw", dw, e)
+  expect_no_error(suppressWarnings(eval(parse(text = recipe_withinrain("dw", "g", "y", "id", stats = TRUE, type = "bayes")), e)))
+  expect_match(paste(deparse(e$plot_subtitle), collapse = " "), "BF", fixed = TRUE)
+})

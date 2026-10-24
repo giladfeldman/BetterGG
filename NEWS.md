@@ -3,6 +3,11 @@
 - `grouped_ggbetweenstats()` and the other `grouped_*` wrappers recognise an abbreviated
   `pal =` or `ggth =` (as R does when the call reaches the ggstatsplot function). Before, the
   user's palette or theme was drawn over by the BetterGG palette and `theme_apa()`.
+- Bayesian rainclouds (`recipe_betweenrain()`/`recipe_withinrain()`, `type = "bayes"`) with three
+  or more groups draw a bar for every pair labelled with its Bayes factor, as `ggbetweenstats()`
+  does (0.2.1 drew none). A grouping column named `g` or `g_...` no longer stops the figure:
+  `performance::r2_bayes()` inside statsExpressions drops such parameters as g-priors and fails,
+  so the generated code runs the tests on a copy with the column renamed (statistics identical).
 - `save_figure()` no longer fails on PNG/TIFF/JPEG with fonts whose subscripts 'ragg'
   mis-measures (Calibri at some sizes measured ~15 million inches high, "Viewport has zero
   dimension(s)"). It measures the font at the requested resolution and, if needed, draws that

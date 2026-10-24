@@ -158,11 +158,29 @@ recipe_betweenrain <- function(data, x, y, name = "plot", type = "parametric", s
   v$paired <- .num(paired)
   v$subj <- if (paired) paste0(", subject.id = ", .lit(subject)) else ""
   bayes_caption <- isTRUE(bf.message) && type == "parametric"
-  .fill(paste(
+  # performance::r2_bayes() (inside statsExpressions' Bayesian ANOVA) drops every
+  # parameter whose name starts with "g_" as a g-prior, so a grouping column named
+  # g or g_... makes it stop. The tests then use a copy with the column renamed.
+  x_raw <- eval(str2lang(v$xs))
+  rename <- (type == "bayes" || bayes_caption) && grepl("^g(_|$)", x_raw)
+  td <- paste0(v$name, "_data")
+  if (rename) {
+    safe <- if (identical(eval(str2lang(v$ys)), "x_group")) "x_group_" else "x_group"
+    rename_code <- .fill(paste(
+      "# statsExpressions' Bayesian R-squared (package performance) fails for a grouping column",
+      "# named g or g_..., so the tests use a copy in which {xs} is named {safe}.",
+      "{name}_test_data <- {name}_data",
+      "names({name}_test_data)[names({name}_test_data) == {xs}] <- {safe}",
+      sep = "
+"), name = v$name, xs = v$xs, safe = .lit(safe))
+    td <- paste0(v$name, "_test_data")
+    v$xs <- .lit(safe); v$X <- .sym(safe)
+  }
+  out <- .fill(paste(
     "# Statistics (statsExpressions, the engine of ggstatsplot); p-values in APA style.",
-    "{name}_k <- nlevels({name}_data[[{xs}]])",
+    "{name}_k <- nlevels({td}[[{xs}]])",
     "{name}_test_fun <- if ({name}_k < 3L) statsExpressions::two_sample_test else statsExpressions::oneway_anova",
-    "{name}_test_args <- list({name}_data, x = {xs}, y = {ys}{subj}, paired = {paired}, type = {type},",
+    "{name}_test_args <- list({td}, x = {xs}, y = {ys}{subj}, paired = {paired}, type = {type},",
     "  var.equal = {veq}, conf.level = {conf}, tr = {tr}, digits = 2L)",
     "# the direction of the test applies to two groups only",
     "if ({name}_k < 3L) {name}_test_args$alternative <- {alt}",
@@ -170,20 +188,22 @@ recipe_betweenrain <- function(data, x, y, name = "plot", type = "parametric", s
     "# A Bayesian test has no p-value; its label is shown as statsExpressions writes it.",
     "{name}_subtitle <- figure_apa_p({name}_test$expression[[1]], {name}_test[[\"p.value\"]][[1]])",
     if (bayes_caption) paste(
-      "{name}_caption <- {name}_test_fun({name}_data, x = {X}, y = {Y}{subj}, paired = {paired},",
+      "{name}_caption <- {name}_test_fun({td}, x = {X}, y = {Y}{subj}, paired = {paired},",
       "  type = \"bayes\", conf.level = {conf})$expression[[1]]", sep = "\n")
     else "{name}_caption <- NULL",
     "# Pairwise comparisons (three or more groups): brackets for p < .05.",
     "{name}_brackets <- NULL",
     "{name}_pairwise_note <- NULL",
     "if ({name}_k >= 3L) {",
-    "  {name}_pairs <- statsExpressions::pairwise_comparisons({name}_data, x = {X}, y = {Y}{subj},",
+    "  {name}_pairs <- statsExpressions::pairwise_comparisons({td}, x = {X}, y = {Y}{subj},",
     "    type = {type}, paired = {paired}, var.equal = {veq}, tr = {tr}, p.adjust.method = {padj}, digits = 2L)",
     "  {name}_pairwise_note <- parse(text = paste0(\"list('Pairwise test:'~bold('\",",
     "    sub(\"'\", \"\\\\'\", unique({name}_pairs$test), fixed = TRUE),",
-    "    if (is.null({name}_pairs[[\"p.value\"]])) \"'), 'Bars shown:'~bold('none (Bayes factors)'))\" else",
+    "    if (is.null({name}_pairs[[\"p.value\"]])) \"'), 'Bars shown:'~bold('all (Bayes factors)'))\" else",
     "      \"'), 'Bars shown:'~bold('significant'), alpha == 0.05)\"))",
-    "  {name}_shown <- {name}_pairs[which({name}_pairs[[\"p.value\"]] < 0.05), , drop = FALSE]",
+    "  # as in ggbetweenstats(): Bayes factors (no p-values) get a bar for every pair",
+    "  {name}_shown <- if (is.null({name}_pairs[[\"p.value\"]])) {name}_pairs else",
+    "    {name}_pairs[which({name}_pairs[[\"p.value\"]] < 0.05), , drop = FALSE]",
     "  {name}_shown <- {name}_shown[order({name}_shown$group1, {name}_shown$group2, method = \"radix\"), , drop = FALSE]",
     "  if (nrow({name}_shown)) {",
     "    {name}_y_range <- diff(range({name}_data[[{ys}]]))",
@@ -201,7 +221,10 @@ recipe_betweenrain <- function(data, x, y, name = "plot", type = "parametric", s
     "  }",
     "}",
     sep = "\n"), name = v$name, xs = v$xs, ys = v$ys, X = v$X, Y = v$Y, subj = v$subj,
-    paired = v$paired, type = v$type, veq = v$veq, conf = v$conf, tr = v$tr, padj = v$padj, alt = v$alt)
+    paired = v$paired, type = v$type, veq = v$veq, conf = v$conf, tr = v$tr, padj = v$padj, alt = v$alt,
+    td = td)
+  if (rename) paste(rename_code, out, sep = "
+") else out
 }
 
 #' Recipe: within-subjects raincloud ([ggwithinrain()])

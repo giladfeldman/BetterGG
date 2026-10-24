@@ -39,8 +39,11 @@ theme_apa <- function(base_size = 12.5, base_family = bgg_font()) {
 #' `"Trebuchet MS"` if it is installed, otherwise `""` (the device's
 #' sans-serif font). Change it with `options(BetterGG.font = "Arial")`.
 #'
-#' Calibri is not recommended: with 'ggstatsplot''s formula-style subtitles it
-#' makes PNG/TIFF rendering fail ("Viewport has zero dimension(s)").
+#' Calibri is not recommended: at some sizes the 'ragg' PNG/TIFF devices
+#' measure its subscripts as millions of inches high, so plots with
+#' 'ggstatsplot''s formula-style subtitles fail ("Viewport has zero
+#' dimension(s)"). [save_figure()] detects such a font and draws that file
+#' with R's Cairo device instead, with a warning.
 #'
 #' R's base [grDevices::pdf()] and [grDevices::postscript()] devices cannot
 #' use system fonts, so the first call registers the font there as an alias

@@ -20,6 +20,9 @@
   call[[1]] <- call("::", as.name("ggstatsplot"), as.name(name))
   for (d in intersect(drop, names(call))) call[[d]] <- NULL
   given <- names(match.call(fn, call, expand.dots = TRUE, envir = env))
+  # grouped_* functions pass `...` on to the base function, which resolves
+  # abbreviations (pal =, ggth =) against its own formals: do the same here.
+  if (startsWith(name, "grouped_")) given <- .resolve_partial(given, sub("^grouped_", "", name))
   styled <- isTRUE(getOption("BetterGG.theme", TRUE)) && !"ggtheme" %in% given
   if (styled) {
     call$ggtheme <- theme_apa()
@@ -27,6 +30,17 @@
     for (nm in setdiff(names(style), given)) call[[nm]] <- style[[nm]]
   }
   list(plot = eval(call, env), given = c(given, if (styled) ".bgg_styled"))
+}
+
+# Expand unique partial argument names against the formals of ggstatsplot's
+# `base` function, the way R matches them when the call reaches it.
+.resolve_partial <- function(given, base) {
+  formals_base <- setdiff(names(formals(getExportedValue("ggstatsplot", base))), "...")
+  vapply(given, function(nm) {
+    if (!nzchar(nm) || nm %in% formals_base) return(nm)
+    hit <- formals_base[startsWith(formals_base, nm)]
+    if (length(hit) == 1L) hit else nm
+  }, "", USE.NAMES = FALSE)
 }
 
 # Evaluate `expr` without changing the random-number state, so a user's

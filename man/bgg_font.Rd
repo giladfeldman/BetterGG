@@ -14,8 +14,11 @@ A font family name.
 sans-serif font). Change it with \code{options(BetterGG.font = "Arial")}.
 }
 \details{
-Calibri is not recommended: with 'ggstatsplot''s formula-style subtitles it
-makes PNG/TIFF rendering fail ("Viewport has zero dimension(s)").
+Calibri is not recommended: at some sizes the 'ragg' PNG/TIFF devices
+measure its subscripts as millions of inches high, so plots with
+'ggstatsplot''s formula-style subtitles fail ("Viewport has zero
+dimension(s)"). \code{\link[=save_figure]{save_figure()}} detects such a font and draws that file
+with R's Cairo device instead, with a warning.
 
 R's base \code{\link[grDevices:pdf]{grDevices::pdf()}} and \code{\link[grDevices:postscript]{grDevices::postscript()}} devices cannot
 use system fonts, so the first call registers the font there as an alias

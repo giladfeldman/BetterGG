@@ -70,3 +70,38 @@ test_that("F6: save_figure(family =) uses one font for all text", {
   expect_false(any(grepl("Arial", f)))
   expect_true(any(grepl(test_font_name(family), f, fixed = TRUE)))
 })
+
+test_that("F1d: grouped wrappers recognise an abbreviated palette or theme (d-891b0b)", {
+  all_cols <- function(g) unique(unlist(lapply(c(list(g), g$patches$plots), cols)))
+  p <- suppressWarnings(grouped_ggbetweenstats(mtcars, cyl, mpg, grouping.var = am,
+    results.subtitle = FALSE, pal = "ggthemes::gdoc"))
+  expect_false(any(oi3 %in% all_cols(p)))
+  # control: without pal= the BetterGG palette is drawn
+  q <- suppressWarnings(grouped_ggbetweenstats(mtcars, cyl, mpg, grouping.var = am, results.subtitle = FALSE))
+  expect_true(any(oi3 %in% all_cols(q)))
+  # an abbreviated ggtheme reaches every panel instead of theme_apa()
+  r <- suppressWarnings(grouped_ggbetweenstats(mtcars, cyl, mpg, grouping.var = am,
+    results.subtitle = FALSE, ggth = ggplot2::theme_dark()))
+  bg <- ggplot2::calc_element("panel.background", r$patches$plots[[1]]$theme)$fill
+  expect_false(identical(bg, "white"))
+})
+
+test_that("save_figure: a font whose plotmath metrics break ragg falls back to Cairo (d-3752c9)", {
+  ok_family <- test_font_family("sans")
+  expect_true(BetterGG:::.ragg_plotmath_ok(ok_family, 110))
+  skip_if_not("Calibri" %in% systemfonts::system_fonts()$family, "Calibri not installed")
+  expect_false(BetterGG:::.ragg_plotmath_ok("Calibri", 110))
+  set.seed(1)
+  p <- suppressWarnings(ggwithinstats(data.frame(id = rep(1:10, 2), c = rep(c("a", "b"), each = 10),
+    y = stats::rnorm(20)), c, y))
+  for (ext in c(".png", ".tiff")) {
+    f <- withr::local_tempfile(fileext = ext)
+    expect_warning(save_figure(p, f, width = 11.8, height = 5.45, dpi = 110, family = "Calibri"), "Cairo")
+    expect_gt(file.size(f), 1000)
+  }
+  withr::local_options(BetterGG.font = "Calibri")
+  f <- withr::local_tempfile(fileext = ".png")
+  q <- suppressWarnings(ggwithinstats(data.frame(id = rep(1:10, 2), c = rep(c("a", "b"), each = 10),
+    y = stats::rnorm(20)), c, y))
+  expect_warning(save_figure(q, f, width = 11.8, height = 5.45, dpi = 110), "Cairo")
+})

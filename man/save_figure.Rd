@@ -40,6 +40,8 @@ in inches. The file type comes from the extension:
 \item \code{.pdf}: vector, fonts embedded (via \code{grDevices::cairo_pdf}).
 \item \code{.svg}: vector (via \code{grDevices::svg}, Cairo).
 \item \code{.png}, \code{.tiff}, \code{.jpg}: raster at \code{dpi} (default 600) via the 'ragg'
-package, which uses the installed system fonts exactly.
+package, which uses the installed system fonts exactly. A font whose
+subscripts 'ragg' mis-measures (Calibri at some sizes) is drawn with R's
+Cairo device instead, with a warning.
 }
 }

@@ -1,3 +1,13 @@
+# BetterGG (development version)
+
+- `grouped_ggbetweenstats()` and the other `grouped_*` wrappers recognise an abbreviated
+  `pal =` or `ggth =` (as R does when the call reaches the ggstatsplot function). Before, the
+  user's palette or theme was drawn over by the BetterGG palette and `theme_apa()`.
+- `save_figure()` no longer fails on PNG/TIFF/JPEG with fonts whose subscripts 'ragg'
+  mis-measures (Calibri at some sizes measured ~15 million inches high, "Viewport has zero
+  dimension(s)"). It measures the font at the requested resolution and, if needed, draws that
+  file with R's Cairo device instead, with a warning.
+
 # BetterGG 0.2.1
 
 - Recipe figures with `stats = TRUE` never print a statistic as NA. When a test cannot be computed

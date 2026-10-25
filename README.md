@@ -114,7 +114,8 @@ Cronbach's alpha and jamovi's reverse scoring.
 horizontal bars sorted by count for many (more than 8) or long unordered
 categories, vertical bars in scale order for ordered factors. `ggproportion()`
 draws the proportion of 1s of a 0/1 variable, optionally by group, with Wilson
-score confidence intervals (named in the caption). In bar and pie charts,
+score confidence intervals (named in the caption); `recipe_freqbars()` and
+`recipe_proportion()` write the same figures as editable code. In bar and pie charts,
 segments below 5% get no percentage label (`min_label_percent`), long category
 names wrap at 40 characters with the legend below the plot (`wrap_width`), and
 ordered factors are coloured in scale order (diverging with a neutral middle for

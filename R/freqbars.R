@@ -76,7 +76,10 @@ recipe_freqbars <- function(data, x, name = "plot", counts = NULL, weights = NUL
   orientation <- match.arg(orientation)
   sort <- match.arg(sort)
   cols <- c(x, counts, weights)
-  v <- list(name = name, data = data, cols = .vec(cols), xs = .lit(x), X = .sym(x), ww = .num(wrap_width))
+  # A variable named like a summary column keeps its categories in `level`.
+  cells_column <- if (x %in% c("counts", "perc", "label")) "level" else x
+  v <- list(name = name, data = data, cols = .vec(cols), xs = .lit(x), cs = .lit(cells_column),
+    X = .sym(cells_column), ww = .num(wrap_width))
   weight <- paste(c("rep(1, nrow({name}_data))",
     if (!is.null(weights)) paste0("{name}_data[[", .lit(weights), "]]"),
     if (!is.null(counts)) paste0("{name}_data[[", .lit(counts), "]]")), collapse = " * ")
@@ -92,7 +95,7 @@ recipe_freqbars <- function(data, x, name = "plot", counts = NULL, weights = NUL
     paste0("# 2. Count", if (is.null(weights) && is.null(counts)) "" else " (weighted)",
       " and percentage of each category."),
     "{name}_cells <- as.data.frame(stats::xtabs({name}_weight ~ {name}_data[[{xs}]]), responseName = \"counts\")",
-    "names({name}_cells)[1] <- {xs}",
+    "names({name}_cells)[1] <- {cs}",
     "{name}_cells$perc <- 100 * {name}_cells$counts / sum({name}_cells$counts)",
     "{name}_cells$label <- paste0(round({name}_cells$perc), \"%\")",
     "{name}_n <- prettyNum(round(sum({name}_cells$counts), 2), big.mark = \",\")",
@@ -103,15 +106,15 @@ recipe_freqbars <- function(data, x, name = "plot", counts = NULL, weights = NUL
     "# number of levels, sequential otherwise); the bars of an unordered factor share one colour.",
     "{name}_ordered_fills <- {ordered}",
     "{name}_fills <- if ({name}_ordered) {name}_ordered_fills(nrow({name}_cells)) else rep(figure_fills[1], nrow({name}_cells))",
-    "names({name}_fills) <- levels({name}_cells[[{xs}]])",
+    "names({name}_fills) <- levels({name}_cells[[{cs}]])",
     paste0("# Horizontal bars", if (orientation == "auto") " for an unordered variable with more than 8 categories" else "",
       if (orientation == "auto") " or a name longer than {ww} characters" else "",
       if (sort == "auto") ", sorted by count (largest on top)." else "."),
     paste0("{name}_horizontal <- ", horizontal),
     paste0("{name}_by_count <- ", by_count),
     "if ({name}_by_count) {",
-    "  {name}_cells[[{xs}]] <- factor({name}_cells[[{xs}]],",
-    "    levels = {name}_cells[[{xs}]][order({name}_cells$counts, decreasing = !{name}_horizontal)])",
+    "  {name}_cells[[{cs}]] <- factor({name}_cells[[{cs}]],",
+    "    levels = {name}_cells[[{cs}]][order({name}_cells$counts, decreasing = !{name}_horizontal)])",
     "}",
     "# Category names wrap at {ww} characters; vertical bars share about 90 characters (no legend; at least 10 each).",
     "{name}_wrap <- {wrap}",

@@ -160,8 +160,9 @@ test_that("ordered fill variables get a diverging (odd) or sequential (even) pal
   recn <- rplot(recipe_piestats("opinions", "nominal", name = "r"), opinions = opinions)
   expect_identical(unname(fills_by_level(recn, "nominal")), bgg_palette("nejm", 5, "fill"))
   # a palette the user chose wins
-  own <- ggpiestats(opinions, resp, results.subtitle = FALSE, palette = "Set2", package = "RColorBrewer")
-  expect_false(identical(unname(fills_by_level(own, "resp")), diverging))
+  own <- ggpiestats(opinions, resp, results.subtitle = FALSE, palette = "RColorBrewer::Set2")
+  expect_identical(substr(toupper(unname(fills_by_level(own, "resp"))), 1, 7),
+    c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854")) # ColorBrewer Set2
   # greyscale: a grey ramp in scale order
   withr::local_options(BetterGG.palette = "grey")
   greys <- unname(fills_by_level(rplot(recipe_piestats("opinions", "resp", name = "r"), opinions = opinions), "resp"))
@@ -283,4 +284,21 @@ test_that("an ordered factor with more than 11 levels is drawn as unordered (not
   real <- ggbarstats(d, place, cond, results.subtitle = FALSE)
   realu <- ggbarstats(transform(d, place = factor(place, ordered = FALSE)), place, cond, results.subtitle = FALSE)
   expect_identical(ggplot2::ggplot_build(real)$data[[1]]$fill, ggplot2::ggplot_build(realu)$data[[1]]$fill)
+})
+
+test_that("recipe_proportion refuses negative weights and a group with no weighted cases", {
+  neg <- transform(binary, w = ifelse(seq_len(nrow(binary)) == 1L, -1, w))
+  expect_error(ggproportion(neg, passed, group, weights = w), "negative")
+  empty <- transform(binary, w = ifelse(group == levels(binary$group)[1], 0, w))
+  expect_error(ggproportion(empty, passed, group, weights = w), "no weighted cases")
+})
+
+test_that("ggfreqbars draws a variable named like its summary columns (label, counts, perc)", {
+  for (clash in c("label", "counts", "perc")) {
+    d <- stats::setNames(data.frame(factor(rep(c("a", "b", "c"), c(2, 3, 5)))), clash)
+    p <- ggfreqbars(d, !!rlang::sym(clash))
+    b <- ggplot2::ggplot_build(p)
+    expect_identical(b$layout$panel_params[[1]]$x$get_labels(), c("a", "b", "c"), info = clash)
+    expect_equal(b$data[[1]]$y, c(20, 30, 50), info = clash)
+  }
 })

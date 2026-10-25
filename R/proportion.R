@@ -75,7 +75,8 @@ recipe_proportion <- function(data, x, group = NULL, name = "plot", weights = NU
     "{name}_y <- as.numeric({name}_data[[{xs}]])",
     "if (!all({name}_y %in% c(0, 1))) stop(\"BetterGG: \", {xs}, \" must contain only 0 and 1 (or FALSE/TRUE).\")",
     if (is.null(weights)) "{name}_weight <- rep(1, nrow({name}_data))" else
-      paste0("{name}_weight <- {name}_data[[", .lit(weights), "]] # frequency weights"),
+      c(paste0("{name}_weight <- {name}_data[[", .lit(weights), "]] # frequency weights"),
+        "if (any({name}_weight < 0)) stop(\"BetterGG: weights must not be negative.\")"),
     if (is.null(group)) "{name}_group <- factor(rep({xs}, nrow({name}_data)), levels = {xs})" else
       paste0("{name}_group <- droplevels(as.factor({name}_data[[", .lit(group), "]]))"),
     "",
@@ -85,6 +86,7 @@ recipe_proportion <- function(data, x, group = NULL, name = "plot", weights = NU
     "{name}_summary <- do.call(rbind, lapply(levels({name}_group), function(level) {",
     "  keep <- {name}_group == level",
     "  n <- sum({name}_weight[keep])",
+    "  if (n <= 0) stop(\"BetterGG: group \\\"\", level, \"\\\" has no weighted cases.\")",
     "  p <- sum({name}_weight[keep] * {name}_y[keep]) / n",
     "  z <- {name}_z",
     "  centre <- (p + z^2 / (2 * n)) / (1 + z^2 / n)",

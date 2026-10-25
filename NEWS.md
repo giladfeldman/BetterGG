@@ -33,7 +33,8 @@
 - New `ggproportion()` and `recipe_proportion()`: the proportion of 1s of a 0/1 (or FALSE/TRUE)
   variable as a bar with its Wilson score confidence interval (the interval of `prop.test()`
   without continuity correction; named in the caption), one bar per level of an optional `group`.
-  Weights count as frequency weights. Any value other than 0/1 is an error. Use it instead of a
+  Weights count as frequency weights; negative weights, or a group whose weights sum to 0, are an
+  error. Any value other than 0/1 is an error. Use it instead of a
   histogram of a 0/1 variable.
   The groups also sit in a column named after the group variable, and the tick labels
   ("group (n = 40)") are matched by position, so code that renames a variable's categories on

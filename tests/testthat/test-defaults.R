@@ -165,3 +165,45 @@ test_that("ordered fill variables get a diverging (odd) or sequential (even) pal
   expect_identical(greys, grDevices::gray.colors(5, start = 0.9, end = 0.3))
   expect_identical(unname(fills_by_level(ggpiestats(opinions, resp, results.subtitle = FALSE), "resp")), greys)
 })
+
+test_that("ggfreqbars: ordered scales as vertical bars in scale order, many categories as sorted horizontal bars", {
+  real <- ggfreqbars(opinions, resp)
+  rec <- rplot(recipe_freqbars("opinions", "resp", name = "r"), opinions = opinions)
+  expect_recipe_matches(real, rec)
+  expect_false(inherits(rec$coordinates, "CoordFlip"))
+  b <- ggplot2::ggplot_build(rec)
+  expect_identical(b$layout$panel_params[[1]]$x$get_labels(), likert5)
+  bars <- b$data[[1]]
+  expect_equal(sum(bars$y), 100)
+  expect_identical(bars$fill, rev(grDevices::hcl.colors(5, "Blue-Red 2")))
+  labels <- layer_data_of(rec, "GeomText")$label
+  expect_identical(labels, paste0(round(as.vector(100 * prop.table(table(opinions$resp)))), "%"))
+  set.seed(2)
+  many <- data.frame(country = factor(sample(paste("Country", LETTERS[1:12]), 300, TRUE, prob = 12:1)))
+  realm <- ggfreqbars(many, country)
+  recm <- rplot(recipe_freqbars("many", "country", name = "r"), many = many)
+  expect_recipe_matches(realm, recm)
+  expect_true(inherits(recm$coordinates, "CoordFlip"))
+  order_shown <- ggplot2::ggplot_build(recm)$layout$panel_params[[1]]$y$get_labels() # flipped: categories on y
+  counts <- table(many$country)
+  # bottom to top: smallest to largest, so the largest bar is on top
+  expect_false(is.unsorted(as.vector(counts[order_shown])))
+  expect_identical(order_shown[length(order_shown)], names(which.max(counts)))
+  # few unordered categories: vertical, in level order, one colour
+  few <- rplot(recipe_freqbars("opinions", "nominal", name = "r"), opinions = opinions)
+  expect_false(inherits(few$coordinates, "CoordFlip"))
+  expect_length(unique(ggplot2::ggplot_build(few)$data[[1]]$fill), 1L)
+  # weights count each case by its weight; orientation can be forced
+  w <- data.frame(a = c("x", "y", "y"), w = c(3, 0.5, 0.5))
+  wb <- ggplot2::ggplot_build(rplot(recipe_freqbars("w", "a", name = "r", weights = "w"), w = w))$data[[1]]
+  expect_equal(wb$y, c(75, 25))
+  expect_equal(ggplot2::ggplot_build(ggfreqbars(w, a, weights = w))$data[[1]]$y, c(75, 25))
+  expect_true(inherits(ggfreqbars(opinions, resp, orientation = "horizontal")$coordinates, "CoordFlip"))
+  # long unordered names: horizontal; long ordered names: vertical, wrapped to share the axis
+  expect_true(inherits(ggfreqbars(long, opinion)$coordinates, "CoordFlip"))
+  ordered_long <- transform(long, opinion = factor(opinion, levels = long_levels, ordered = TRUE))
+  ol <- ggfreqbars(ordered_long, opinion)
+  expect_false(inherits(ol$coordinates, "CoordFlip"))
+  ticks <- ggplot2::ggplot_build(ol)$layout$panel_params[[1]]$x$get_labels()
+  expect_true(all(nchar(unlist(strsplit(ticks, "\n", fixed = TRUE))) <= floor(90 / 3)))
+})

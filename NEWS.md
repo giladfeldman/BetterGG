@@ -1,3 +1,38 @@
+# BetterGG 0.2.3
+
+- `ggfactorialrain()`/`recipe_factorialrain()`: when the outcome has few distinct values (2 to 15,
+  e.g. a 1-7 rating scale) the rain points are also jittered vertically, by at most 0.15 of the
+  smallest gap between two values (never towards a neighbouring value), and spread a little wider
+  sideways, instead of forming flat lines. Continuous outcomes are unchanged. The jitter keeps its
+  fixed seed. (`ggbetweenrain()` draws a beeswarm at the exact values and `ggwithinrain()` joins
+  each subject's points by lines; neither is jittered, so neither changes.)
+- `ggbarstats()`, `ggpiestats()` (and their `grouped_*` versions), `recipe_barstats()` and
+  `recipe_piestats()` have two new arguments:
+  - `min_label_percent = 5`: segments below 5% get no percentage label (thin segments' labels
+    overlapped); the legend still names them. `0` labels every non-empty segment.
+  - `wrap_width = 40`: legend labels, and the bar labels of the x axis, wrap at 40 characters;
+    a category name longer than that puts the legend below the plot, one entry per row. Up to six
+    bars share about 70 characters of x axis (at least 10 each); with more bars the labels are
+    angled as before. The rule "angle when the names total more than 60 characters" is replaced by
+    this wrapping.
+- An ordered factor shown by the fill colours of a bar or pie chart is coloured in scale order: a
+  diverging red-grey-blue palette (`hcl.colors("Blue-Red 2")`, first level red) for an odd number
+  of levels, whose middle level is a neutral grey, and a sequential blue palette
+  (`hcl.colors("Blues 3")`, light to dark) for an even number; a grey ramp with
+  `options(BetterGG.palette = "grey")`. Unordered factors and a palette you choose are unchanged.
+- New `ggfreqbars()` and `recipe_freqbars()`: one categorical variable as bars labelled with their
+  percentages, an alternative to a pie. With `orientation = "auto"`, an unordered variable with
+  more than 8 categories or a name longer than `wrap_width` gets horizontal bars sorted by count;
+  otherwise vertical bars in level (scale) order. Counts and case weights are supported.
+- New `ggproportion()` and `recipe_proportion()`: the proportion of 1s of a 0/1 (or FALSE/TRUE)
+  variable as a bar with its Wilson score confidence interval (the interval of `prop.test()`
+  without continuity correction; named in the caption), one bar per level of an optional `group`.
+  Weights count as frequency weights. Any value other than 0/1 is an error. Use it instead of a
+  histogram of a 0/1 variable.
+- `ggfreqbars()` and `ggproportion()` draw their figure by running the code their recipe writes.
+- `ggpiestats()` draws no empty axis lines, ticks or tick labels (`recipe_piestats()` has not since
+  0.2.2; the function still drew them with `theme_apa()`).
+
 # BetterGG 0.2.2
 
 - `ggreliability()`/`recipe_reliability()`: the item-rest panel no longer cuts off labels near its

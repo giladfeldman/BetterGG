@@ -108,6 +108,18 @@ contrasts; `stats = TRUE` adds the type III F tests). `ggreliability()` shows th
 responses to each item and each item's correlation with the other items, with
 Cronbach's alpha and jamovi's reverse scoring.
 
+## Categories and 0/1 variables
+
+`ggfreqbars()` draws one categorical variable as labelled bars instead of a pie:
+horizontal bars sorted by count for many (more than 8) or long unordered
+categories, vertical bars in scale order for ordered factors. `ggproportion()`
+draws the proportion of 1s of a 0/1 variable, optionally by group, with Wilson
+score confidence intervals (named in the caption). In bar and pie charts,
+segments below 5% get no percentage label (`min_label_percent`), long category
+names wrap at 40 characters with the legend below the plot (`wrap_width`), and
+ordered factors are coloured in scale order (diverging with a neutral middle for
+an odd number of levels, sequential otherwise).
+
 ## Install
 
 Requires R >= 4.5 and ggstatsplot >= 1.1.2.
@@ -142,7 +154,7 @@ random seeds.
 The test suite checks exact-value APA formatting, statistical identity under
 matching seeds, argument forwarding, raincloud geometry, palettes, fonts, and
 exports. Run `Rscript tools/check.R` followed by `R CMD build .` and
-`R CMD check --no-manual BetterGG_0.2.2.tar.gz` in native R. In WebR the
+`R CMD check --no-manual BetterGG_0.2.3.tar.gz` in native R. In WebR the
 recipes and the plots work (they are used by the jmv2gg web app), except
 ggstatsplot's parametric and nonparametric pairwise tests: their PMCMRplus
 dependency needs Rmpfr, which WebR does not have.

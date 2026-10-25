@@ -19,7 +19,9 @@ recipe_piestats(
   max_labels = Inf,
   weights = NULL,
   setup = TRUE,
-  cramers_v = c("bias-corrected", "uncorrected")
+  cramers_v = c("bias-corrected", "uncorrected"),
+  min_label_percent = 5,
+  wrap_width = 40
 )
 }
 \arguments{
@@ -62,6 +64,14 @@ association: \code{"bias-corrected"} (the default, as \code{\link[=ggbarstats]{g
 with its confidence interval) or \code{"uncorrected"}, Cramer's V as jamovi and
 SPSS report it, \code{sqrt(chi^2 / (n * (k - 1)))} from the same test, without
 an interval.}
+
+\item{min_label_percent}{Segments below this percentage get no label
+(default 5; 0 labels every non-empty segment).}
+
+\item{wrap_width}{Wrap category labels (legend and bars) at this many
+characters (default 40); a longer category name puts the legend below
+the plot. An ordered factor \code{x} is coloured in scale order (see
+\code{\link[=ggbarstats]{ggbarstats()}}).}
 }
 \value{
 R code as one character string.

@@ -61,7 +61,9 @@ R code as one character string.
 Returns 'ggplot2' code that draws the \code{\link[=ggfactorialrain]{ggfactorialrain()}} figure: raw
 observations and their distribution in every cell, with estimated marginal
 means and confidence intervals, the second factor by colour and the third
-by panels.
+by panels. With few distinct outcome values (2 to 15) the rain is also
+jittered vertically, by at most 0.15 of the smallest gap between values,
+as in \code{\link[=ggfactorialrain]{ggfactorialrain()}}.
 }
 \examples{
 cat(recipe_factorialrain("tooth", "dose", "len", colour = "supp"))

@@ -20,7 +20,7 @@ recipes use. Run it once before them; each recipe includes it when
 rainclouds for group comparisons.
 \item \code{\link[=recipe_histostats]{recipe_histostats()}}, \code{\link[=recipe_scatterstats]{recipe_scatterstats()}}, \code{\link[=recipe_corrmat]{recipe_corrmat()}},
 \code{\link[=recipe_barstats]{recipe_barstats()}}, \code{\link[=recipe_piestats]{recipe_piestats()}}, \code{\link[=recipe_coefstats]{recipe_coefstats()}},
-\code{\link[=recipe_reliability]{recipe_reliability()}}.
+\code{\link[=recipe_reliability]{recipe_reliability()}}, \code{\link[=recipe_freqbars]{recipe_freqbars()}}, \code{\link[=recipe_proportion]{recipe_proportion()}}.
 }
 
 Statistics on the figure are off by default (\code{stats = FALSE}). With

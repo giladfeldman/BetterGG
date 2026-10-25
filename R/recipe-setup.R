@@ -14,7 +14,7 @@
 #'   rainclouds for group comparisons.
 #' * [recipe_histostats()], [recipe_scatterstats()], [recipe_corrmat()],
 #'   [recipe_barstats()], [recipe_piestats()], [recipe_coefstats()],
-#'   [recipe_reliability()].
+#'   [recipe_reliability()], [recipe_freqbars()], [recipe_proportion()].
 #'
 #' Statistics on the figure are off by default (`stats = FALSE`). With
 #' `stats = TRUE` the code recomputes them with 'statsExpressions', the

@@ -57,6 +57,12 @@ complete cases), and the means come from 'emmeans' with covariates held
 at their mean and equal weights for the cells. Pass \code{means} to draw means
 from another model instead (for example one with case weights or fewer
 terms); the plot then draws them as given.
+
+The rain is jittered sideways. When the outcome has few distinct values
+(2 to 15, e.g. a 1-7 rating scale), the points are also jittered
+vertically by up to 0.15 of the smallest gap between two values (so never
+towards a neighbouring value) and spread a little wider, instead of
+forming flat lines. The jitter uses a fixed seed and is reproducible.
 }
 \examples{
 tooth <- transform(ToothGrowth, dose = factor(dose))

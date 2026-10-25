@@ -31,9 +31,9 @@ gghistostats(...)
 
 ggdotplotstats(...)
 
-ggpiestats(...)
+ggpiestats(..., min_label_percent = 5, wrap_width = 40)
 
-ggbarstats(...)
+ggbarstats(..., min_label_percent = 5, wrap_width = 40)
 
 ggcoefstats(...)
 
@@ -47,9 +47,9 @@ grouped_gghistostats(...)
 
 grouped_ggdotplotstats(...)
 
-grouped_ggpiestats(...)
+grouped_ggpiestats(..., min_label_percent = 5, wrap_width = 40)
 
-grouped_ggbarstats(...)
+grouped_ggbarstats(..., min_label_percent = 5, wrap_width = 40)
 
 ggcorrmat(...)
 
@@ -57,6 +57,12 @@ grouped_ggcorrmat(...)
 }
 \arguments{
 \item{...}{Passed to the 'ggstatsplot' function of the same name.}
+
+\item{min_label_percent}{Bar and pie charts: segments below this
+percentage get no label (default 5; 0 labels every non-empty segment).}
+
+\item{wrap_width}{Bar and pie charts: wrap category labels at this many
+characters (default 40).}
 }
 \value{
 A \code{ggplot} (or \code{patchwork}) object.
@@ -79,6 +85,20 @@ change it, \code{NULL} to keep 'ggstatsplot''s palette.
 'ggstatsplot''s \code{ggbetweenstats()} always runs Welch's test and ignores
 \code{var.equal = TRUE}; BetterGG warns when it is given. \code{\link[=recipe_betweenrain]{recipe_betweenrain()}}
 honours it (Student's t / Fisher's ANOVA).
+
+Bar and pie charts (\code{ggbarstats()}, \code{ggpiestats()} and their \verb{grouped_*}
+versions) also:
+\itemize{
+\item drop the percentage label of a segment below \code{min_label_percent} (the
+legend still names it), so labels of thin segments do not overlap;
+\item wrap legend labels (and the bar labels of the x axis) at \code{wrap_width}
+characters, and put the legend below the plot when a category name is
+longer than that;
+\item colour an ordered factor in scale order: a diverging red-grey-blue
+palette for an odd number of levels (a neutral middle), a sequential blue
+palette otherwise (greyscale: a grey ramp). Unordered factors keep the
+categorical palette.
+}
 }
 \examples{
 library(BetterGG)

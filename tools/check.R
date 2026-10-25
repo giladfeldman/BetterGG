@@ -2,7 +2,7 @@
 if (getRversion() < "4.5.0") stop("BetterGG requires R >= 4.5.0.")
 results <- testthat::test_local(".", reporter = "summary", stop_on_failure = FALSE)
 checks <- as.data.frame(results)
-expected <- c("apa-p", "raincloud", "recipes", "review3", "style")
+expected <- c("apa-p", "defaults", "raincloud", "recipes", "review3", "style")
 missing <- setdiff(expected, unique(checks$context))
 cat("Checks:", sum(checks$nb), "failures:", sum(checks$failed),
     "errors:", sum(checks$error), "skips:", sum(checks$skipped), "\n")

@@ -3,7 +3,9 @@
 #' Returns 'ggplot2' code that draws the [ggfactorialrain()] figure: raw
 #' observations and their distribution in every cell, with estimated marginal
 #' means and confidence intervals, the second factor by colour and the third
-#' by panels.
+#' by panels. With few distinct outcome values (2 to 15) the rain is also
+#' jittered vertically, by at most 0.15 of the smallest gap between values,
+#' as in [ggfactorialrain()].
 #'
 #' @inheritParams recipe_betweenrain
 #' @param x,y Names of the first factor and the outcome.
@@ -100,7 +102,13 @@ recipe_factorialrain <- function(data, x, y, colour = NULL, facet = NULL, covari
     "{name}_data$rain_position <- {name}_data$x_position - 0.2 * {name}_slot",
     "{name}_data$cell <- interaction({name}_data[{factors}], drop = TRUE, lex.order = TRUE)",
     "{name}_means$x_position <- {name}_place({name}_means)",
-    sep = "\n"), name = name, place = place, factors = v$factors,
+    "# Rain jitter: sideways; with few distinct outcome values (2 to 15, e.g. a 1-7 scale)",
+    "# also up and down by at most 0.15 of the smallest gap, so no point reaches the next value.",
+    "{name}_values <- sort(unique({name}_data[[{ys}]]))",
+    "{name}_few <- length({name}_values) >= 2L && length({name}_values) <= 15L",
+    "{name}_jitter_width <- (if ({name}_few) 0.1 else 0.06) * {name}_slot",
+    "{name}_jitter_height <- if ({name}_few) 0.15 * min(diff({name}_values)) else 0",
+    sep = "\n"), name = name, place = place, factors = v$factors, ys = v$ys,
     k = if (is.null(colour)) "1L" else .fill("nlevels({name}_data[[{cs}]])", name = name, cs = .lit(colour)),
     side_note = if (is.null(colour)) "" else "; colour groups side by side within each."))
 
@@ -132,9 +140,9 @@ recipe_factorialrain <- function(data, x, y, colour = NULL, facet = NULL, covari
     .fill(paste0("  ggdist::stat_slab(ggplot2::aes(fill = {G}, group = cell), orientation = \"vertical\",\n",
       "    side = \"right\", justification = 0, width = {name}_slot, scale = 0.45, colour = NA, alpha = 0.5,\n",
       "    normalize = \"groups\")"), G = G, name = name),
-    "  # rain: every observation, slightly jittered sideways",
+    "  # rain: every observation, slightly jittered (fixed seed: reproducible)",
     .fill(paste0("  ggplot2::geom_point(ggplot2::aes(x = rain_position, colour = {G}),\n",
-      "    position = ggplot2::position_jitter(width = 0.06 * {name}_slot, height = 0, seed = 1123),\n",
+      "    position = ggplot2::position_jitter(width = {name}_jitter_width, height = {name}_jitter_height, seed = 1123),\n",
       "    size = 1.4, alpha = 0.5, stroke = 0)"), G = G, name = name),
     if (!is.null(colour)) c(
       "  # model means of each colour group joined across the x levels",

@@ -14,6 +14,12 @@
 #' from another model instead (for example one with case weights or fewer
 #' terms); the plot then draws them as given.
 #'
+#' The rain is jittered sideways. When the outcome has few distinct values
+#' (2 to 15, e.g. a 1-7 rating scale), the points are also jittered
+#' vertically by up to 0.15 of the smallest gap between two values (so never
+#' towards a neighbouring value) and spread a little wider, instead of
+#' forming flat lines. The jitter uses a fixed seed and is reproducible.
+#'
 #' @param data A data frame.
 #' @param x,y Column names (bare or quoted): the first factor and the outcome.
 #' @param colour,facet Optional second and third factor.
@@ -81,6 +87,7 @@ ggfactorialrain <- function(data, x, y, colour = NULL, facet = NULL, covariates 
   d$.bgg_cell <- interaction(d[factors], drop = TRUE, lex.order = TRUE)
   means$.bgg_x <- place(means)
 
+  jitter <- .rain_jitter(d[[y]], slot)
   colours <- bgg_palette(getOption("BetterGG.palette", "nejm") %||% "nejm", nlevels(d[[group]]), "colour")
   fills <- bgg_palette(getOption("BetterGG.palette", "nejm") %||% "nejm", nlevels(d[[group]]), "fill")
   plot <- ggplot2::ggplot(d, ggplot2::aes(x = .data$.bgg_x, y = .data[[y]])) +
@@ -91,7 +98,7 @@ ggfactorialrain <- function(data, x, y, colour = NULL, facet = NULL, covariates 
     ) +
     ggplot2::geom_point(
       ggplot2::aes(x = .data$.bgg_rain_x, colour = .data[[group]]),
-      position = ggplot2::position_jitter(width = 0.06 * slot, height = 0, seed = 1123),
+      position = ggplot2::position_jitter(width = jitter$width, height = jitter$height, seed = 1123),
       size = 1.4, alpha = 0.5, stroke = 0
     )
   if (!is.null(colour)) {
@@ -129,6 +136,16 @@ ggfactorialrain <- function(data, x, y, colour = NULL, facet = NULL, covariates 
   if (!is.null(facet)) plot <- plot + ggplot2::facet_wrap(ggplot2::vars(.data[[facet]]), labeller = ggplot2::label_wrap_gen(width = 30))
   if (!identical(bgg_font(), "")) plot <- .set_family(plot, bgg_font())
   plot
+}
+
+# Sideways jitter of the rain, plus a small vertical jitter when the outcome has
+# few distinct values (2 to 15, e.g. a 1-7 scale), where points would otherwise
+# sit on flat lines: 0.15 of the smallest gap between two values, so a point never
+# reaches the next value. The seed is fixed, so the jitter is reproducible.
+.rain_jitter <- function(values, slot) {
+  values <- sort(unique(values))
+  few <- length(values) >= 2L && length(values) <= 15L
+  list(width = (if (few) 0.1 else 0.06) * slot, height = if (few) 0.15 * min(diff(values)) else 0)
 }
 
 # F tests of every model term, one line each.

@@ -207,3 +207,44 @@ test_that("ggfreqbars: ordered scales as vertical bars in scale order, many cate
   ticks <- ggplot2::ggplot_build(ol)$layout$panel_params[[1]]$x$get_labels()
   expect_true(all(nchar(unlist(strsplit(ticks, "\n", fixed = TRUE))) <= floor(90 / 3)))
 })
+
+binary <- local({
+  set.seed(21)
+  data.frame(passed = rbinom(150, 1, 0.3), group = factor(rep(c("A", "B", "C"), each = 50)),
+    w = rep(c(1, 2, 3), 50))
+})
+
+test_that("ggproportion: proportion of 1s with Wilson intervals, by group, with frequency weights", {
+  real <- ggproportion(binary, passed)
+  rec <- rplot(recipe_proportion("binary", "passed", name = "r"), binary = binary)
+  expect_recipe_matches(real, rec)
+  bar <- ggplot2::ggplot_build(rec)$data[[1]]
+  ci <- layer_data_of(rec, "GeomErrorbar")
+  ref <- stats::prop.test(sum(binary$passed), nrow(binary), correct = FALSE)
+  expect_equal(bar$y, mean(binary$passed))
+  expect_equal(c(ci$ymin, ci$ymax), unname(ref$conf.int[1:2]), tolerance = 1e-10)
+  expect_match(rec$labels$caption, "Wilson")
+  expect_match(rec$labels$caption, "95%")
+  realg <- ggproportion(binary, passed, group = group, conf.level = 0.9)
+  recg <- rplot(recipe_proportion("binary", "passed", group = "group", name = "r", conf.level = 0.9), binary = binary)
+  expect_recipe_matches(realg, recg)
+  cig <- layer_data_of(recg, "GeomErrorbar")
+  for (i in 1:3) {
+    part <- binary$passed[binary$group == levels(binary$group)[i]]
+    ref <- stats::prop.test(sum(part), length(part), conf.level = 0.9, correct = FALSE)$conf.int
+    expect_equal(c(cig$ymin[i], cig$ymax[i]), unname(ref[1:2]), tolerance = 1e-10)
+  }
+  # frequency weights: the same as repeating each row by its weight
+  wide <- binary[rep(seq_len(nrow(binary)), binary$w), ]
+  a <- layer_data_of(rplot(recipe_proportion("binary", "passed", "group", name = "r", weights = "w"), binary = binary), "GeomErrorbar")
+  b <- layer_data_of(rplot(recipe_proportion("wide", "passed", "group", name = "r"), wide = wide), "GeomErrorbar")
+  expect_equal(a[c("ymin", "ymax")], b[c("ymin", "ymax")])
+  expect_equal(layer_data_of(ggproportion(binary, passed, group, weights = w), "GeomErrorbar")[c("ymin", "ymax")],
+    b[c("ymin", "ymax")])
+  # logical columns are 0/1; anything else is refused
+  lg <- transform(binary, passed = passed == 1)
+  expect_equal(ggplot2::ggplot_build(ggproportion(lg, passed))$data[[1]]$y, mean(binary$passed))
+  expect_error(ggproportion(transform(binary, passed = passed + 1), passed), "only 0 and 1")
+  expect_error(run_recipe(recipe_proportion("bad", "passed", name = "r"), bad = transform(binary, passed = passed * 3)),
+    "only 0 and 1")
+})

@@ -39,6 +39,10 @@ factor, otherwise level order), \code{"count"} (largest first) or
 
 \item{xlab}{Category axis title.}
 
+\item{ylab}{Percentage axis title (the number of cases is added).}
+
+\item{title}{Plot title.}
+
 \item{wrap_width}{Wrap category labels (legend and bars) at this many
 characters (default 40); a longer category name puts the legend below
 the plot. An ordered factor \code{x} is coloured in scale order (see

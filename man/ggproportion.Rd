@@ -29,7 +29,7 @@ other value is an error.}
 \item{conf.level}{Confidence level of the intervals.}
 
 \item{xlab, ylab, title}{Axis titles and plot title; \code{ylab} defaults to
-"\% with \if{html}{\out{<x>}} = 1".}
+\code{paste0("\% with ", x, " = 1")}.}
 
 \item{wrap_width}{Wrap group labels at this many characters.}
 }

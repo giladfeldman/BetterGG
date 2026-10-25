@@ -23,7 +23,7 @@
 #' @param weights Optional column of frequency weights.
 #' @param conf.level Confidence level of the intervals.
 #' @param xlab,ylab,title Axis titles and plot title; `ylab` defaults to
-#'   "% with <x> = 1".
+#'   `paste0("% with ", x, " = 1")`.
 #' @param wrap_width Wrap group labels at this many characters.
 #' @return A `ggplot` object.
 #' @examples
@@ -49,6 +49,8 @@ ggproportion <- function(data, x, group = NULL, weights = NULL, conf.level = 0.9
 #' @param x Name of the 0/1 column.
 #' @param group Optional name of a grouping column.
 #' @param weights Optional name of a column of frequency weights.
+#' @param xlab,ylab,title Axis titles and plot title; `ylab` defaults to
+#'   `paste0("% with ", x, " = 1")`.
 #' @return R code as one character string.
 #' @examples
 #' cat(recipe_proportion("mtcars", "am", group = "cyl"))

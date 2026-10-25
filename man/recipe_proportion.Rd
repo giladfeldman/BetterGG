@@ -32,7 +32,8 @@ recipe_proportion(
 
 \item{conf.level}{Confidence level of intervals and effect sizes.}
 
-\item{xlab, title}{Axis title and plot title.}
+\item{xlab, ylab, title}{Axis titles and plot title; \code{ylab} defaults to
+\code{paste0("\% with ", x, " = 1")}.}
 
 \item{wrap_width}{Wrap category labels (legend and bars) at this many
 characters (default 40); a longer category name puts the legend below

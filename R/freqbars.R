@@ -59,6 +59,8 @@ ggfreqbars <- function(data, x, counts = NULL, weights = NULL,
 #' @param counts Optional name of a column of frequency counts.
 #' @param weights Optional name of a column of case weights.
 #' @param xlab Category axis title.
+#' @param ylab Percentage axis title (the number of cases is added).
+#' @param title Plot title.
 #' @return R code as one character string.
 #' @examples
 #' cat(recipe_freqbars("mtcars", "cyl"))

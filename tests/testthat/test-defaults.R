@@ -49,3 +49,119 @@ test_that("factorial rain: continuous outcomes keep a sideways-only jitter", {
   real <- ggplot2::ggplot_build(ggfactorialrain(tooth, dose, len, colour = supp))$data[[2]]
   expect_equal(real$y, tooth$len)
 })
+
+small <- data.frame(
+  a = factor(rep(rep(c("big", "mid", "tiny"), 2), c(90, 7, 3, 60, 30, 10))),
+  g = factor(rep(c("p", "q"), each = 100))
+)
+
+test_that("stacked bars and pies drop percentage labels of segments below 5%", {
+  labels_of <- function(p) layer_data_of(p, "GeomLabel")$label
+  real <- ggbarstats(small, a, g, results.subtitle = FALSE)
+  rec <- rplot(recipe_barstats("small", "a", "g", name = "r"), small = small)
+  expect_recipe_matches(real, rec)
+  expect_false("3%" %in% labels_of(rec))
+  expect_false("3%" %in% labels_of(real))
+  expect_true(all(c("7%", "10%", "90%") %in% labels_of(rec)))
+  # the threshold is an argument; 0 keeps every non-empty segment
+  real0 <- ggbarstats(small, a, g, results.subtitle = FALSE, min_label_percent = 0)
+  rec0 <- rplot(recipe_barstats("small", "a", "g", name = "r", min_label_percent = 0), small = small)
+  expect_recipe_matches(real0, rec0)
+  expect_true("3%" %in% labels_of(rec0))
+  pie <- data.frame(a = factor(rep(c("big", "mid", "tiny"), c(150, 42, 8))))
+  realp <- ggpiestats(pie, a, results.subtitle = FALSE)
+  recp <- rplot(recipe_piestats("pie", "a", name = "r"), pie = pie)
+  expect_recipe_matches(realp, recp)
+  expect_identical(sort(labels_of(recp)), c("21%", "75%"))
+  expect_error(ggpiestats(pie, a, min_label = 2), "write it in full")
+})
+
+long_levels <- c(
+  "I strongly believe that the policy described in the scenario would help most people in my community",
+  "I am not sure whether the policy described in the scenario would help or harm people in my community",
+  "I strongly believe that the policy described in the scenario would harm most people in my community"
+)
+long <- local({
+  set.seed(3)
+  data.frame(opinion = factor(sample(long_levels, 150, TRUE), levels = long_levels),
+    cond = factor(sample(c("control", "treatment"), 150, TRUE)))
+})
+
+fixed_width_in <- function(p) {
+  file <- tempfile(fileext = ".png")
+  ragg::agg_png(file, width = 7.2, height = 5.4, units = "in", res = 72)
+  on.exit({ grDevices::dev.off(); unlink(file) })
+  g <- ggplot2::ggplotGrob(p)
+  c(width = grid::convertWidth(sum(g$widths), "in", valueOnly = TRUE),
+    height = grid::convertHeight(sum(g$heights), "in", valueOnly = TRUE))
+}
+
+test_that("long category labels wrap at 40 characters and move the legend below the plot", {
+  real <- ggpiestats(long, opinion, results.subtitle = FALSE)
+  rec <- rplot(recipe_piestats("long", "opinion", name = "r"), long = long)
+  expect_recipe_matches(real, rec)
+  for (p in list(real, rec)) {
+    b <- ggplot2::ggplot_build(p)
+    shown <- b$plot$scales$get_scales("fill")$get_labels()
+    expect_true(all(grepl("\n", shown, fixed = TRUE)))
+    expect_true(all(nchar(unlist(strsplit(shown, "\n", fixed = TRUE))) <= 40))
+    expect_identical(p$theme$legend.position, "bottom")
+    # nothing but the panel needs more than the 7.2 x 5.4 in figure
+    size <- fixed_width_in(p)
+    expect_lt(size[["width"]], 7.2)
+    expect_lt(size[["height"]], 5.4)
+  }
+  # bars: legend and the category axis both wrap
+  realb <- ggbarstats(long, opinion, cond, results.subtitle = FALSE)
+  recb <- rplot(recipe_barstats("long", "opinion", "cond", name = "r"), long = long)
+  expect_recipe_matches(realb, recb)
+  expect_identical(recb$theme$legend.position, "bottom")
+  axis_long <- data.frame(group = factor(sample(long_levels, 150, TRUE)), resp = factor(sample(c("y", "n"), 150, TRUE)))
+  realx <- ggbarstats(axis_long, resp, group, results.subtitle = FALSE)
+  recx <- rplot(recipe_barstats("axis_long", "resp", "group", name = "r"), axis_long = axis_long)
+  expect_recipe_matches(realx, recx)
+  ticks <- ggplot2::ggplot_build(recx)$layout$panel_params[[1]]$x$get_labels()
+  expect_true(all(grepl("\n", ticks, fixed = TRUE)))
+  expect_lt(fixed_width_in(recx)[["height"]], 5.4)
+  # short labels keep the legend on the right
+  short <- rplot(recipe_piestats("mtcars", "cyl", name = "r"))
+  expect_false(identical(short$theme$legend.position, "bottom"))
+})
+
+likert5 <- c("Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree")
+opinions <- local({
+  set.seed(8)
+  data.frame(resp = factor(sample(likert5, 200, TRUE), levels = likert5, ordered = TRUE),
+    resp4 = factor(sample(likert5[-3], 200, TRUE), levels = likert5[-3], ordered = TRUE),
+    nominal = factor(sample(likert5, 200, TRUE), levels = likert5),
+    cond = factor(sample(c("control", "treatment"), 200, TRUE)))
+})
+
+test_that("ordered fill variables get a diverging (odd) or sequential (even) palette in scale order", {
+  fills_by_level <- function(p, column) {
+    b <- ggplot2::ggplot_build(p)
+    b$plot$scales$get_scales("fill")$map(levels(opinions[[column]]))
+  }
+  diverging <- rev(grDevices::hcl.colors(5, "Blue-Red 2"))
+  sequential <- grDevices::hcl.colors(5, "Blues 3", rev = TRUE)[-1]
+  real <- ggbarstats(opinions, resp, cond, results.subtitle = FALSE)
+  rec <- rplot(recipe_barstats("opinions", "resp", "cond", name = "r"), opinions = opinions)
+  expect_recipe_matches(real, rec)
+  expect_identical(unname(fills_by_level(rec, "resp")), diverging)
+  expect_identical(unname(fills_by_level(real, "resp")), diverging)
+  realp <- ggpiestats(opinions, resp4, results.subtitle = FALSE)
+  recp <- rplot(recipe_piestats("opinions", "resp4", name = "r"), opinions = opinions)
+  expect_recipe_matches(realp, recp)
+  expect_identical(unname(fills_by_level(recp, "resp4")), sequential)
+  # unordered factors keep the categorical palette
+  recn <- rplot(recipe_piestats("opinions", "nominal", name = "r"), opinions = opinions)
+  expect_identical(unname(fills_by_level(recn, "nominal")), bgg_palette("nejm", 5, "fill"))
+  # a palette the user chose wins
+  own <- ggpiestats(opinions, resp, results.subtitle = FALSE, palette = "Set2", package = "RColorBrewer")
+  expect_false(identical(unname(fills_by_level(own, "resp")), diverging))
+  # greyscale: a grey ramp in scale order
+  withr::local_options(BetterGG.palette = "grey")
+  greys <- unname(fills_by_level(rplot(recipe_piestats("opinions", "resp", name = "r"), opinions = opinions), "resp"))
+  expect_identical(greys, grDevices::gray.colors(5, start = 0.9, end = 0.3))
+  expect_identical(unname(fills_by_level(ggpiestats(opinions, resp, results.subtitle = FALSE), "resp")), greys)
+})

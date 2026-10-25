@@ -309,6 +309,12 @@ recipe_corrmat <- function(data, vars, name = "plot", type = "parametric", p.adj
 #'   with its confidence interval) or `"uncorrected"`, Cramer's V as jamovi and
 #'   SPSS report it, `sqrt(chi^2 / (n * (k - 1)))` from the same test, without
 #'   an interval.
+#' @param min_label_percent Segments below this percentage get no label
+#'   (default 5; 0 labels every non-empty segment).
+#' @param wrap_width Wrap category labels (legend and bars) at this many
+#'   characters (default 40); a longer category name puts the legend below
+#'   the plot. An ordered factor `x` is coloured in scale order (see
+#'   [ggbarstats()]).
 #' @return R code as one character string.
 #' @examples
 #' cat(recipe_barstats("mtcars", "am", "cyl"))
@@ -316,19 +322,23 @@ recipe_corrmat <- function(data, vars, name = "plot", type = "parametric", p.adj
 recipe_barstats <- function(data, x, y, name = "plot", counts = NULL, stats = FALSE, type = "parametric",
                             paired = FALSE, conf.level = 0.95, xlab = y, legend.title = x,
                             title = NULL, weights = NULL, facet = NULL, setup = TRUE,
-                            cramers_v = c("bias-corrected", "uncorrected")) {
+                            cramers_v = c("bias-corrected", "uncorrected"), min_label_percent = 5,
+                            wrap_width = 40) {
   cramers_v <- match.arg(cramers_v)
   .check_name1(data = data, x = x, y = y, counts = counts, weights = weights, facet = facet)
   .check_prefix(name)
   type <- .stats_type(type)
   .check_categorical_stats(stats, weights, facet, counts)
-  prep <- .categorical_prep(data, x, y, counts, name, weights = weights, facet = facet)
+  .check_label_args(min_label_percent, wrap_width)
+  prep <- .categorical_prep(data, x, y, counts, name, weights = weights, facet = facet,
+    min_label_percent = min_label_percent, wrap_width = wrap_width)
   stats_code <- if (isTRUE(stats)) .categorical_stats(name, x, y, type, paired, conf.level, two_way = TRUE,
     uncorrected_v = cramers_v == "uncorrected") else NULL
   layers <- c(
     .fill("ggplot2::ggplot({name}_cells, ggplot2::aes(x = {Y}, y = perc, fill = {X}))", name = name, X = .sym(x), Y = .sym(y)),
     "  # 100% stacked bars",
     "  ggplot2::geom_col(position = \"fill\", colour = \"black\")",
+    .fill("  ggplot2::scale_x_discrete(labels = function(labels) {name}_wrap(labels, {name}_axis_width))", name = name),
     paste0("  ggplot2::scale_y_continuous(labels = function(p) paste0(round(100 * p), \"%\"),\n",
       "    breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0.05, 0.95, by = 0.1))"),
     "  # percentage labels",
@@ -340,7 +350,10 @@ recipe_barstats <- function(data, x, y, name = "plot", counts = NULL, stats = FA
 ",
       "    plot.margin = ggplot2::margin(5.5, 5.5, 5.5, {name}_left_room)))"), name = name),
     .fill("  ggplot2::guides(fill = ggplot2::guide_legend(title = {lt}))", lt = .lit(legend.title)),
-    .fill("  ggplot2::scale_fill_manual(values = {name}_fills, name = \"\", drop = FALSE)", name = name),
+    .fill("  ggplot2::scale_fill_manual(values = {name}_fills, name = \"\", drop = FALSE, labels = {name}_wrap)", name = name),
+    "  # a long category name: the legend goes below the plot, one entry per row",
+    .fill(paste0("  (if ({name}_long) ggplot2::theme(legend.position = \"bottom\", legend.direction = \"vertical\",\n",
+      "    legend.key.spacing.y = ggplot2::unit(6, \"pt\")))"), name = name),
     if (!is.null(facet)) .fill("  ggplot2::facet_wrap(ggplot2::vars({F}), labeller = ggplot2::label_wrap_gen(width = 30))", F = .sym(facet)),
     if (isTRUE(stats)) c(
       "  # proportion test in each bar",
@@ -355,13 +368,16 @@ recipe_barstats <- function(data, x, y, name = "plot", counts = NULL, stats = FA
       sub = if (isTRUE(stats)) paste0("figure_statistics(", name, "_subtitle)") else "NULL")
   )
   many <- .fill(paste(
-    "# Many or long bar labels are angled; with many bars the group sizes get smaller, so they do not overlap.",
+    "# Bar labels wrap: up to six bars share about 70 characters (at least 10 each);",
+    "# more bars are angled and wrap at {ww}. With many bars the group sizes get smaller.",
     "{name}_ticks <- levels(factor({name}_cells[[{ys}]]))",
-    "{name}_many <- length({name}_ticks) > 6L || sum(nchar({name}_ticks)) > 60L",
+    "{name}_many <- length({name}_ticks) > 6L",
+    "{name}_axis_width <- if ({name}_many) {ww} else max(10, min({ww}, floor(70 / length({name}_ticks))))",
     "{name}_size <- max(2.5, min(4, 24 / length({name}_ticks)))",
-    "# room on the left for the first angled label (about 4 pt per character)",
-    "{name}_left_room <- max(5.5, 4 * nchar({name}_ticks[1]) - 30)",
-    sep = "\n"), name = name, ys = .lit(y))
+    "# room on the left for the first angled label (about 4 pt per character of its longest line)",
+    "{name}_first <- strsplit({name}_wrap({name}_ticks[1], {name}_axis_width), \"\\n\", fixed = TRUE)[[1]]",
+    "{name}_left_room <- max(5.5, 4 * max(nchar({name}_first)) - 30)",
+    sep = "\n"), name = name, ys = .lit(y), ww = .num(wrap_width))
   code <- .code(prep, "", stats_code, if (!is.null(stats_code)) "", "# 3. The figure", many,
     .join_layers(paste0(name, "_plot"), layers))
   .with_setup(code, setup, stats)
@@ -386,13 +402,16 @@ recipe_barstats <- function(data, x, y, name = "plot", counts = NULL, stats = FA
 recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, stats = FALSE,
                             type = "parametric", paired = FALSE, conf.level = 0.95,
                             legend.title = x, title = NULL, max_labels = Inf, weights = NULL, setup = TRUE,
-                            cramers_v = c("bias-corrected", "uncorrected")) {
+                            cramers_v = c("bias-corrected", "uncorrected"), min_label_percent = 5,
+                            wrap_width = 40) {
   cramers_v <- match.arg(cramers_v)
   .check_name1(data = data, x = x, y = y, counts = counts, weights = weights)
   .check_prefix(name)
   type <- .stats_type(type)
   .check_categorical_stats(stats, weights, NULL, counts)
-  prep <- .categorical_prep(data, x, y, counts, name, weights = weights)
+  .check_label_args(min_label_percent, wrap_width)
+  prep <- .categorical_prep(data, x, y, counts, name, weights = weights,
+    min_label_percent = min_label_percent, wrap_width = wrap_width)
   stats_code <- if (isTRUE(stats)) .categorical_stats(name, x, y, type, paired, conf.level, two_way = !is.null(y),
     uncorrected_v = cramers_v == "uncorrected") else NULL
   label_layer <- .fill(paste0("ggplot2::geom_label(ggplot2::aes(label = label, group = {X}), position = ggplot2::position_fill(vjust = 0.5),\n",
@@ -407,11 +426,14 @@ recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, sta
     if (!is.null(y)) .fill("  ggplot2::facet_wrap(facets = ggplot2::vars({Y}), labeller = ggplot2::label_wrap_gen(width = 30))", Y = .sym(y)),
     "  ggplot2::coord_polar(theta = \"y\")",
     "  ggplot2::scale_y_continuous(breaks = NULL)",
-    .fill("  ggplot2::scale_fill_manual(values = {name}_fills, name = \"\", drop = FALSE)", name = name),
+    .fill("  ggplot2::scale_fill_manual(values = {name}_fills, name = \"\", drop = FALSE, labels = {name}_wrap)", name = name),
     "  theme_figure()",
     "  # a pie has no axes: no lines, ticks or tick labels",
     paste0("  ggplot2::theme(panel.grid = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(),\n",
       "    axis.line = ggplot2::element_blank(), axis.text = ggplot2::element_blank())"),
+    "  # a long category name: the legend goes below the plot, one entry per row",
+    .fill(paste0("  (if ({name}_long) ggplot2::theme(legend.position = \"bottom\", legend.direction = \"vertical\",\n",
+      "    legend.key.spacing.y = ggplot2::unit(6, \"pt\")))"), name = name),
     if (isTRUE(stats) && !is.null(y)) .fill(paste0("  ggplot2::geom_text(data = {name}_bar_tests, ggplot2::aes(label = test_label, x = 1.65, y = 0.5),\n",
       "    position = ggplot2::position_fill(vjust = 1), size = 2.8, parse = TRUE)"), name = name),
     .fill("  ggplot2::labs(x = NULL, y = NULL, subtitle = {sub}, title = {title}, caption = NULL)",
@@ -434,7 +456,8 @@ recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, sta
 
 # Counts and percentages of x within each level of y (and facet), or overall.
 # With weights, each case counts its weight.
-.categorical_prep <- function(data, x, y, counts, name, weights = NULL, facet = NULL) {
+.categorical_prep <- function(data, x, y, counts, name, weights = NULL, facet = NULL,
+                              min_label_percent = 5, wrap_width = 40) {
   cols <- c(x, y, facet, counts, weights)
   by <- c(facet, y)
   v <- list(name = name, data = data, cols = .vec(cols), xs = .lit(x), ys = if (is.null(y)) "" else .lit(y),
@@ -479,11 +502,22 @@ recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, sta
       byv = .vec(by), order = paste(paste0(name, "_cells[[", .lit(c(by, x)), "]]"), collapse = ", ")))
   }
   .code(code, .fill(paste(
-    "{name}_cells$label <- ifelse({name}_cells$counts == 0, NA_character_, paste0(round({name}_cells$perc), \"%\"))",
-    "# Fill colours: the palette, or a longer qualitative palette for many categories.",
-    "{name}_fills <- if (nlevels({name}_data[[{xs}]]) <= length(figure_fills)) figure_fills else",
+    "# Percentage labels; segments below {min}% get none (they would overlap; the legend names them).",
+    "{name}_cells$label <- ifelse({name}_cells$counts == 0 | {name}_cells$perc < {min}, NA_character_,",
+    "  paste0(round({name}_cells$perc), \"%\"))",
+    "# Fill colours: an ordered factor in scale order (diverging with a neutral middle for an",
+    "# odd number of levels, sequential otherwise); else the palette, or a longer qualitative",
+    "# palette for many categories.",
+    "{name}_ordered_fills <- {ordered}",
+    "{name}_fills <- if (is.ordered({name}_data[[{xs}]])) {name}_ordered_fills(nlevels({name}_data[[{xs}]])) else",
+    "  if (nlevels({name}_data[[{xs}]]) <= length(figure_fills)) figure_fills else",
     "  grDevices::hcl.colors(nlevels({name}_data[[{xs}]]), \"Dark 3\")",
-    sep = "\n"), name = name, xs = v$xs))
+    "# Category names wrap at {ww} characters; a longer name puts the legend below the plot.",
+    "{name}_wrap <- {wrap}",
+    "{name}_long <- any(nchar(levels({name}_data[[{xs}]])) > {ww})",
+    sep = "\n"), name = name, xs = v$xs, min = .num(min_label_percent), ww = .num(wrap_width),
+    ordered = .ordered_fills_code(getOption("BetterGG.palette", "nejm") %||% "nejm"),
+    wrap = .wrap_code(wrap_width)))
 }
 
 .categorical_stats <- function(name, x, y, type, paired, conf.level, two_way, uncorrected_v = FALSE) {

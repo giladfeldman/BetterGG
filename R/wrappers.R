@@ -190,7 +190,24 @@
 #' `var.equal = TRUE`; BetterGG warns when it is given. [recipe_betweenrain()]
 #' honours it (Student's t / Fisher's ANOVA).
 #'
+#' Bar and pie charts (`ggbarstats()`, `ggpiestats()` and their `grouped_*`
+#' versions) also:
+#'
+#' * drop the percentage label of a segment below `min_label_percent` (the
+#'   legend still names it), so labels of thin segments do not overlap;
+#' * wrap legend labels (and the bar labels of the x axis) at `wrap_width`
+#'   characters, and put the legend below the plot when a category name is
+#'   longer than that;
+#' * colour an ordered factor in scale order: a diverging red-grey-blue
+#'   palette for an odd number of levels (a neutral middle), a sequential blue
+#'   palette otherwise (greyscale: a grey ramp). Unordered factors keep the
+#'   categorical palette.
+#'
 #' @param ... Passed to the 'ggstatsplot' function of the same name.
+#' @param min_label_percent Bar and pie charts: segments below this
+#'   percentage get no label (default 5; 0 labels every non-empty segment).
+#' @param wrap_width Bar and pie charts: wrap category labels at this many
+#'   characters (default 40).
 #' @return A `ggplot` (or `patchwork`) object.
 #' @name ggstatsplot-apa
 #' @examples
@@ -215,10 +232,10 @@ gghistostats <- .wrap("gghistostats")
 ggdotplotstats <- .wrap("ggdotplotstats")
 #' @rdname ggstatsplot-apa
 #' @export
-ggpiestats <- .wrap("ggpiestats")
+ggpiestats <- .wrap_categorical("ggpiestats")
 #' @rdname ggstatsplot-apa
 #' @export
-ggbarstats <- .wrap("ggbarstats")
+ggbarstats <- .wrap_categorical("ggbarstats")
 #' @rdname ggstatsplot-apa
 #' @export
 ggcoefstats <- .wrap("ggcoefstats")
@@ -239,10 +256,10 @@ grouped_gghistostats <- .wrap("grouped_gghistostats")
 grouped_ggdotplotstats <- .wrap("grouped_ggdotplotstats")
 #' @rdname ggstatsplot-apa
 #' @export
-grouped_ggpiestats <- .wrap("grouped_ggpiestats")
+grouped_ggpiestats <- .wrap_categorical("grouped_ggpiestats")
 #' @rdname ggstatsplot-apa
 #' @export
-grouped_ggbarstats <- .wrap("grouped_ggbarstats")
+grouped_ggbarstats <- .wrap_categorical("grouped_ggbarstats")
 #' @rdname ggstatsplot-apa
 #' @export
 ggcorrmat <- .wrap("ggcorrmat")

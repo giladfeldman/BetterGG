@@ -62,10 +62,12 @@ recipe_proportion <- function(data, x, group = NULL, name = "plot", weights = NU
   .check_conf(conf.level)
   .check_label_args(0, wrap_width)
   cols <- c(x, group, weights)
+  # A group variable named like a summary column keeps the groups in `level` only.
+  group_column <- if ((group %||% x) %in% c("level", "n", "proportion", "lower", "upper", "label")) "level" else group %||% x
   pct <- .num(100 * conf.level)
   caption <- paste0("Bars: proportion of 1s; error bars: ", pct, "% Wilson score confidence intervals",
     if (is.null(weights)) "." else " (weights as frequencies).")
-  v <- list(name = name, data = data, cols = .vec(cols), xs = .lit(x), conf = .num(conf.level),
+  v <- list(name = name, data = data, cols = .vec(cols), xs = .lit(x), gs = .lit(group_column), conf = .num(conf.level),
     ww = .num(wrap_width), wrap = .wrap_code(wrap_width))
   prep <- do.call(.fill, c(list(paste(c(
     "# 1. Data: complete cases; {xs} must hold only 0 and 1 (FALSE/TRUE count as 0/1).",
@@ -91,20 +93,23 @@ recipe_proportion <- function(data, x, group = NULL, name = "plot", weights = NU
     "}))",
     "{name}_summary$level <- factor({name}_summary$level, levels = levels({name}_group))",
     "{name}_summary$label <- paste0(round(100 * {name}_summary$proportion), \"%\")",
-    "# Group labels (wrapped at {ww} characters) with the number of cases",
+    "# The groups also sit in a column named after their variable, so code that renames",
+    "# a variable's categories on a finished figure finds them.",
+    "{name}_summary[[{gs}]] <- {name}_summary$level",
+    "# Group labels (wrapped at {ww} characters) with the number of cases, in group order",
     "{name}_wrap <- {wrap}",
-    "{name}_axis_labels <- stats::setNames(paste0({name}_wrap({name}_summary$level), \"\\n(n = \",",
-    "  prettyNum(round({name}_summary$n, 2), big.mark = \",\"), \")\"), {name}_summary$level)"),
+    "{name}_n_text <- prettyNum(round({name}_summary$n, 2), big.mark = \",\")"),
     collapse = "\n")), v))
   layers <- c(
-    .fill("ggplot2::ggplot({name}_summary, ggplot2::aes(x = level, y = proportion))", name = name),
+    .fill("ggplot2::ggplot({name}_summary, ggplot2::aes(x = .data[[{gs}]], y = proportion))", name = name, gs = v$gs),
     .fill("  ggplot2::geom_col(fill = figure_fills[1], colour = \"black\", alpha = 0.8, width = {width})",
       width = if (is.null(group)) "0.4" else "0.6"),
     .fill("  # {pct}% Wilson score confidence intervals", pct = pct),
     "  ggplot2::geom_errorbar(ggplot2::aes(ymin = lower, ymax = upper), width = 0.12, linewidth = 0.6)",
     "  # percentage above each interval",
     "  ggplot2::geom_text(ggplot2::aes(y = upper, label = label), vjust = -0.7, size = 3.5, family = figure_font)",
-    .fill("  ggplot2::scale_x_discrete(labels = {name}_axis_labels)", name = name),
+    .fill("  ggplot2::scale_x_discrete(labels = function(groups) paste0({name}_wrap(groups), \"\\n(n = \", {name}_n_text, \")\"))",
+      name = name),
     paste0("  ggplot2::scale_y_continuous(limits = c(0, 1.1), breaks = seq(0, 1, by = 0.2),\n",
       "    labels = function(p) paste0(round(100 * p), \"%\"), expand = ggplot2::expansion(mult = c(0, 0)))"),
     .fill("  ggplot2::labs(x = {xlab}, y = {ylab}, title = {title}, caption = {caption})",

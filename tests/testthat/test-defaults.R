@@ -251,3 +251,19 @@ test_that("ggproportion: proportion of 1s with Wilson intervals, by group, with 
   expect_error(run_recipe(recipe_proportion("bad", "passed", name = "r"), bad = transform(binary, passed = passed * 3)),
     "only 0 and 1")
 })
+
+test_that("recipe_proportion keeps the groups in a column named after their variable", {
+  rec <- rplot(recipe_proportion("binary", "passed", "group", name = "r"), binary = binary)
+  expect_true("group" %in% names(rec$data))
+  ticks <- function(p) ggplot2::ggplot_build(p)$layout$panel_params[[1]]$x$get_labels()
+  expect_true(startsWith(ticks(rec)[1], paste0(levels(binary$group)[1], "\n(n = ")))
+  # renaming the categories on the finished figure renames its ticks; n stays with its group
+  renamed <- rec
+  renamed$data$group <- factor(renamed$data$group, labels = paste("Group", seq_len(nlevels(binary$group))))
+  expect_identical(sub("\n.*", "", ticks(renamed)), paste("Group", seq_len(nlevels(binary$group))))
+  expect_identical(sub("^.*\n", "", ticks(renamed)), sub("^.*\n", "", ticks(rec)))
+  # a group variable named like a summary column does not overwrite it
+  clash <- transform(binary, n = group)
+  recn <- rplot(recipe_proportion("clash", "passed", "n", name = "r"), clash = clash)
+  expect_equal(sort(recn$data$n), sort(as.numeric(table(binary$group))))
+})

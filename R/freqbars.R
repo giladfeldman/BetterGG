@@ -8,7 +8,8 @@
 #' than 8 categories, or with a category name longer than `wrap_width`
 #' characters, is drawn as horizontal bars sorted by count (the largest on
 #' top); everything else as vertical bars in level order (scale order for an
-#' ordered factor). Ordered factors are coloured in scale order as in
+#' ordered factor). An ordered factor with more than 11 levels is drawn as
+#' unordered. Ordered factors are coloured in scale order as in
 #' [ggbarstats()]; the bars of an unordered factor share one colour (the axis
 #' names them). Category labels wrap at `wrap_width` characters (vertical
 #' bars: about 90 characters shared by the bars, at least 10 each).
@@ -95,7 +96,8 @@ recipe_freqbars <- function(data, x, name = "plot", counts = NULL, weights = NUL
     "{name}_cells$perc <- 100 * {name}_cells$counts / sum({name}_cells$counts)",
     "{name}_cells$label <- paste0(round({name}_cells$perc), \"%\")",
     "{name}_n <- prettyNum(round(sum({name}_cells$counts), 2), big.mark = \",\")",
-    "{name}_ordered <- is.ordered({name}_data[[{xs}]])",
+    "# An ordered factor with more than 11 levels is not a rating scale: drawn as unordered.",
+    "{name}_ordered <- is.ordered({name}_data[[{xs}]]) && nlevels({name}_data[[{xs}]]) <= 11L",
     "{name}_long <- any(nchar(levels({name}_data[[{xs}]])) > {ww})",
     "# An ordered factor is coloured in scale order (diverging with a neutral middle for an odd",
     "# number of levels, sequential otherwise); the bars of an unordered factor share one colour.",

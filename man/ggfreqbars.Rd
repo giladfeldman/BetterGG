@@ -52,7 +52,8 @@ With \code{orientation = "auto"} (the default), an unordered factor with more
 than 8 categories, or with a category name longer than \code{wrap_width}
 characters, is drawn as horizontal bars sorted by count (the largest on
 top); everything else as vertical bars in level order (scale order for an
-ordered factor). Ordered factors are coloured in scale order as in
+ordered factor). An ordered factor with more than 11 levels is drawn as
+unordered. Ordered factors are coloured in scale order as in
 \code{\link[=ggbarstats]{ggbarstats()}}; the bars of an unordered factor share one colour (the axis
 names them). Category labels wrap at \code{wrap_width} characters (vertical
 bars: about 90 characters shared by the bars, at least 10 each).

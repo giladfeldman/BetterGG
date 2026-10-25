@@ -13,6 +13,10 @@
 # of levels (a symmetric scale with a middle point) gets a diverging red-to-blue
 # palette with a neutral grey middle; an even number a sequential blue palette
 # (light to dark, without the near-white end). Greyscale: a light-to-dark grey ramp.
+# An ordered factor with at most 11 levels (a rating scale, up to 0-10); longer ordered
+# factors (e.g. a region list stored as ordinal) are drawn as unordered.
+.rating_scale <- function(x) is.ordered(x) && nlevels(x) <= 11L
+
 .ordered_fills_code <- function(palette) {
   if (identical(palette, "grey")) return("function(k) grDevices::gray.colors(k, start = 0.9, end = 0.3)")
   paste0("function(k) if (k %% 2L == 1L) rev(grDevices::hcl.colors(k, \"Blue-Red 2\")) else\n",
@@ -82,8 +86,11 @@
     if (!is.null(sc)) {
       new <- sc$clone()
       new$labels <- function(labels) wrap(labels)
-      if (!is.null(palette) && is.data.frame(data) && is.ordered(data[[column]])) {
+      if (!is.null(palette) && is.data.frame(data) && .rating_scale(data[[column]])) {
         new$palette <- .eval_code(.ordered_fills_code(palette))
+      } else if (!is.null(palette) && is.null(tryCatch(bgg_palette(palette, length(lv)), error = function(e) NULL))) {
+        # more categories than the palette has colours: a longer qualitative palette (as the recipes)
+        new$palette <- function(n) grDevices::hcl.colors(n, "Dark 3")
       }
       p <- suppressMessages(p + new)
     }

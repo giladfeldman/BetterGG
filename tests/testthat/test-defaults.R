@@ -267,3 +267,20 @@ test_that("recipe_proportion keeps the groups in a column named after their vari
   recn <- rplot(recipe_proportion("clash", "passed", "n", name = "r"), clash = clash)
   expect_equal(sort(recn$data$n), sort(as.numeric(table(binary$group))))
 })
+
+test_that("an ordered factor with more than 11 levels is drawn as unordered (not a rating scale)", {
+  set.seed(3)
+  places <- paste("Place", sprintf("%02d", 1:20))
+  d <- data.frame(place = factor(sample(places, 300, TRUE), levels = places, ordered = TRUE),
+    cond = factor(sample(c("control", "treatment"), 300, TRUE)))
+  rec <- rplot(recipe_freqbars("d", "place", name = "r"), d = d)
+  expect_true(inherits(rec$coordinates, "CoordFlip"))
+  expect_length(unique(ggplot2::ggplot_build(rec)$data[[1]]$fill), 1L)
+  expect_true(inherits(ggfreqbars(d, place)$coordinates, "CoordFlip"))
+  recb <- rplot(recipe_barstats("d", "place", "cond", name = "r"), d = d)
+  unordered <- rplot(recipe_barstats("u", "place", "cond", name = "r"), u = transform(d, place = factor(place, ordered = FALSE)))
+  expect_identical(ggplot2::ggplot_build(recb)$data[[1]]$fill, ggplot2::ggplot_build(unordered)$data[[1]]$fill)
+  real <- ggbarstats(d, place, cond, results.subtitle = FALSE)
+  realu <- ggbarstats(transform(d, place = factor(place, ordered = FALSE)), place, cond, results.subtitle = FALSE)
+  expect_identical(ggplot2::ggplot_build(real)$data[[1]]$fill, ggplot2::ggplot_build(realu)$data[[1]]$fill)
+})

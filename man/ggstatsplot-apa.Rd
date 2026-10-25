@@ -96,8 +96,12 @@ characters, and put the legend below the plot when a category name is
 longer than that;
 \item colour an ordered factor in scale order: a diverging red-grey-blue
 palette for an odd number of levels (a neutral middle), a sequential blue
-palette otherwise (greyscale: a grey ramp). Unordered factors keep the
-categorical palette.
+palette otherwise (greyscale: a grey ramp), when it has at most 11 levels
+(a rating scale); a longer ordered factor is coloured as unordered.
+Unordered factors keep the categorical palette, or a longer qualitative
+palette (\code{hcl.colors(n, "Dark 3")}) when they have more categories than it
+has colours (before, more than 8 categories under the NEJM palette was an
+error).
 }
 }
 \examples{

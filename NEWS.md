@@ -20,6 +20,12 @@
   of levels, whose middle level is a neutral grey, and a sequential blue palette
   (`hcl.colors("Blues 3")`, light to dark) for an even number; a grey ramp with
   `options(BetterGG.palette = "grey")`. Unordered factors and a palette you choose are unchanged.
+  Only an ordered factor with at most 11 levels counts as a rating scale; a longer one (e.g. a
+  list of regions stored as ordinal) is drawn as unordered (`ggfreqbars()`: horizontal bars sorted
+  by count).
+- `ggbarstats()`/`ggpiestats()` with more unordered categories than the palette has colours (more
+  than 8 under the default NEJM palette) stopped with an error; they now use
+  `hcl.colors(n, "Dark 3")`, as `recipe_barstats()`/`recipe_piestats()` already did.
 - New `ggfreqbars()` and `recipe_freqbars()`: one categorical variable as bars labelled with their
   percentages, an alternative to a pie. With `orientation = "auto"`, an unordered variable with
   more than 8 categories or a name longer than `wrap_width` gets horizontal bars sorted by count;

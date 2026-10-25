@@ -509,7 +509,7 @@ recipe_piestats <- function(data, x, y = NULL, name = "plot", counts = NULL, sta
     "# odd number of levels, sequential otherwise); else the palette, or a longer qualitative",
     "# palette for many categories.",
     "{name}_ordered_fills <- {ordered}",
-    "{name}_fills <- if (is.ordered({name}_data[[{xs}]])) {name}_ordered_fills(nlevels({name}_data[[{xs}]])) else",
+    "{name}_fills <- if (is.ordered({name}_data[[{xs}]]) && nlevels({name}_data[[{xs}]]) <= 11L) {name}_ordered_fills(nlevels({name}_data[[{xs}]])) else",
     "  if (nlevels({name}_data[[{xs}]]) <= length(figure_fills)) figure_fills else",
     "  grDevices::hcl.colors(nlevels({name}_data[[{xs}]]), \"Dark 3\")",
     "# Category names wrap at {ww} characters; a longer name puts the legend below the plot.",

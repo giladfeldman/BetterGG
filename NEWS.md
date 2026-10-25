@@ -29,6 +29,9 @@
   without continuity correction; named in the caption), one bar per level of an optional `group`.
   Weights count as frequency weights. Any value other than 0/1 is an error. Use it instead of a
   histogram of a 0/1 variable.
+  The groups also sit in a column named after the group variable, and the tick labels
+  ("group (n = 40)") are matched by position, so code that renames a variable's categories on
+  the finished figure renames its ticks.
 - `ggfreqbars()` and `ggproportion()` draw their figure by running the code their recipe writes.
 - `ggpiestats()` draws no empty axis lines, ticks or tick labels (`recipe_piestats()` has not since
   0.2.2; the function still drew them with `theme_apa()`).

@@ -96,6 +96,10 @@
       bars <- levels(p$data[[rlang::as_name(x)]])
       width <- .axis_wrap_width(length(bars), wrap_width)
       p <- suppressMessages(p + ggplot2::scale_x_discrete(labels = function(labels) wrap(labels, width)))
+    } else if (inherits(p$coordinates, "CoordPolar")) {
+      # a pie has no axes: no lines, ticks or tick labels (as recipe_piestats())
+      p <- p + ggplot2::theme(axis.line = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(),
+        axis.text = ggplot2::element_blank())
     }
     p
   }

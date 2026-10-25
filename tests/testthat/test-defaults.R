@@ -73,6 +73,9 @@ test_that("stacked bars and pies drop percentage labels of segments below 5%", {
   recp <- rplot(recipe_piestats("pie", "a", name = "r"), pie = pie)
   expect_recipe_matches(realp, recp)
   expect_identical(sort(labels_of(recp)), c("21%", "75%"))
+  # the pie draws no empty axis lines (as recipe_piestats() since 0.2.2)
+  expect_s3_class(realp$theme$axis.line, "element_blank")
+  expect_s3_class(realp$theme$axis.text, "element_blank")
   expect_error(ggpiestats(pie, a, min_label = 2), "write it in full")
 })
 
